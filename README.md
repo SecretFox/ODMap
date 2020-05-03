@@ -6,6 +6,7 @@ Overlay map for Stonehenge Occult Defence.
 **Usage / Configuration**  
 Map is only visible during Occult Defence scenario.  
 Can be moved and resized while GUI is unlocked.  
+There is no zoom.  
 You can edit config.xml which is included in the download to configure how mobs get displayed.  
 By default:  
 * Boss = Big orange skull  
