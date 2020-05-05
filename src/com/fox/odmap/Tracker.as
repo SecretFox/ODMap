@@ -1,6 +1,10 @@
 import com.GameInterface.Chat;
+import com.GameInterface.DistributedValueBase;
 import com.GameInterface.Game.Camera;
 import com.GameInterface.Game.Character;
+import com.GameInterface.Game.CharacterBase;
+import com.GameInterface.Game.Team;
+import com.GameInterface.Game.TeamInterface;
 import com.GameInterface.MathLib.Vector3;
 import com.GameInterface.Nametags;
 import com.GameInterface.Tooltip.TooltipData;
@@ -11,6 +15,7 @@ import com.Utils.ID32;
 import com.Utils.Signal;
 import com.fox.odmap.MarkerConfig;
 import com.fox.odmap.MarkerObject;
+import com.fox.odmap.Mod;
 import mx.utils.Delegate;
 /*
 * ...
@@ -41,7 +46,7 @@ class com.fox.odmap.Tracker
 	//private var minY = 160;
 	//private var maxY = 348;
 
-	private var Scale;
+	private var mapScale;
 
 	private var loadListener:Object;
 	public var SignalLoadFailed:Signal;
@@ -62,6 +67,16 @@ class com.fox.odmap.Tracker
 		XMLFile.onLoad = Delegate.create(this, ProcessXML);
 	}
 
+	public function Hide()
+	{
+		for (var i in markerArray) MarkerObject(markerArray[i]).imgClip._visible = false;
+	}
+
+	public function Show()
+	{
+		for (var i in markerArray) MarkerObject(markerArray[i]).imgClip._visible = true;
+	}
+
 	public function Start()
 	{
 		XMLFile.load("ODMap/config.xml");
@@ -69,19 +84,38 @@ class com.fox.odmap.Tracker
 
 	private function StartTracking()
 	{
+		WaypointInterface.SignalPlayfieldChanged.Connect(PlayfieldChanged, this);
+		if (!DistributedValueBase.GetDValue("ShowPlayerNametag"))
+		{
+			AddToQueue(CharacterBase.GetClientCharID());
+		}
+		if (!DistributedValueBase.GetDValue("ShowVicinityPlayerNametags"))
+		{
+			var team:Team = TeamInterface.GetClientTeamInfo();
+			for (var i in team.m_TeamMembers)
+			{
+				var teamMember = team.m_TeamMembers[i];
+				AddToQueue(teamMember["m_CharacterId"]);
+			}
+		}
 		Nametags.SignalNametagAdded.Connect(AddToQueue, this);
 		Nametags.SignalNametagUpdated.Connect(AddToQueue, this);
 		Nametags.SignalNametagRemoved.Connect(ClearMarker, this);
-		WaypointInterface.SignalPlayfieldChanged.Connect(Disconnect, this);
 		Nametags.RefreshNametags();
+	}
+
+	private function PlayfieldChanged()
+	{
+		if (!Mod.IsODZone()) Disconnect();
 	}
 
 	public function Disconnect()
 	{
+		ClearMarkers();
+		WaypointInterface.SignalPlayfieldChanged.Disconnect(PlayfieldChanged, this);
 		Nametags.SignalNametagAdded.Disconnect(AddToQueue, this);
 		Nametags.SignalNametagUpdated.Disconnect(AddToQueue, this);
 		Nametags.SignalNametagRemoved.Disconnect(ClearMarker, this);
-		WaypointInterface.SignalPlayfieldChanged.Disconnect(Disconnect, this);
 		loadListener = undefined;
 	}
 
@@ -122,7 +156,7 @@ class com.fox.odmap.Tracker
 		}
 		else
 		{
-			Chat.SignalShowFIFOMessage.Emit("Failed to read ODMap config", 0);
+			Chat.SignalShowFIFOMessage.Emit("ODMap: Failed to read config.xml", 0);
 			SignalLoadFailed.Emit(true);
 		}
 		XMLFile = undefined;
@@ -140,12 +174,11 @@ class com.fox.odmap.Tracker
 
 	public function ChangeScale()
 	{
-		Scale = mapRoot.Image._width / 200;
+		mapScale = mapRoot.Image._width / 200;
 		for (var i in markerArray)
 		{
 			var marker:MarkerObject = markerArray[i];
-			marker.imgClip._xscale = marker.imgClip._yscale = marker.config.scale * Scale * 100;
-			//com.GameInterface.UtilsBase.PrintChatText("2config scale " + marker.config.scale + " + img " + Scale + " = total " + marker.imgClip._xscale);
+			marker.imgClip._xscale = marker.imgClip._yscale = marker.config.scale * mapScale * 100;
 			marker.imgClip._x  = -marker.imgClip._width / 2;
 			marker.imgClip._y = -marker.imgClip._height / 2;
 		}
@@ -233,7 +266,7 @@ class com.fox.odmap.Tracker
 		{
 			if (MarkerObject(markerArray[i]).imgClip == img)
 			{
-				Chat.SignalShowFIFOMessage.Emit("ODMap failed to load img " + markerArray[i].config.img, 0);
+				Chat.SignalShowFIFOMessage.Emit("ODMap: Failed to load img " + markerArray[i].config.img, 0);
 				break;
 			}
 		}
@@ -312,9 +345,7 @@ class com.fox.odmap.Tracker
 				}));
 			}
 		}
-		marker.imgClip._xscale = marker.imgClip._yscale = config.scale * Scale * 100; // scale from config
-		//com.GameInterface.UtilsBase.PrintChatText("config scale " + config.scale + " + img " + Scale + " = total " + marker.imgClip._xscale);
-		//marker.containerClip._xscale = marker.containerClip._yscale = Scale; // scale from map size
+		marker.imgClip._xscale = marker.imgClip._yscale = config.scale * mapScale * 100;
 		markerArray.push(marker);
 		imgLoader.loadClip(config.img, marker.imgClip);
 	}
@@ -350,10 +381,11 @@ class com.fox.odmap.Tracker
 
 	private function ClearMarker(id:ID32)
 	{
+		if id.IsPlayer() return;
 		for (var i in markerArray)
 		{
 			var marker:MarkerObject = markerArray[i];
-			if (marker.char.GetID().toString() == id.toString()/* && !marker.client*/)
+			if (marker.char.GetID().toString() == id.toString())
 			{
 				marker.char.SignalOffensiveTargetChanged.DisconnectSlot(marker.slot);
 				marker.containerClip.m_Tooltip.Close();

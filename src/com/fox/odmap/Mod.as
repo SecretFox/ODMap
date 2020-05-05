@@ -1,5 +1,7 @@
+import com.GameInterface.Chat;
 import com.GameInterface.DistributedValue;
 import com.GameInterface.DistributedValueBase;
+import com.GameInterface.GUIModuleIF;
 import com.GameInterface.Game.Character;
 import com.Utils.Archive;
 import com.Utils.GlobalSignal;
@@ -26,11 +28,11 @@ class com.fox.odmap.Mod
 	{
 		m_swfRoot = root;
 		mouseListener = new Object();
-		mouseListener.onMouseWheel = Delegate.create(this, changeSize);
+		mouseListener.onMouseWheel = Delegate.create(this, onMouseWheel);
 		nametagsEnabled = DistributedValue.Create("ShowVicinityNPCNametags");
 	}
 
-	private function IsODZone()
+	static function IsODZone()
 	{
 		return Character.GetClientCharacter().GetPlayfieldID() == 7670;
 	}
@@ -47,7 +49,6 @@ class com.fox.odmap.Mod
 		{
 			if (config.FindEntry("NametagsEnabled"))
 			{
-				//UtilsBase.PrintChatText("disabling nametags");
 				nametagsEnabled.SetValue(false);
 				config.DeleteEntry("NametagsEnabled");
 			}
@@ -74,7 +75,9 @@ class com.fox.odmap.Mod
 		{
 			config.ReplaceEntry("NametagsEnabled", true);
 			nametagsEnabled.SetValue(true);
-			//UtilsBase.PrintChatText("forcing nametags to be enabled");
+			Chat.SignalShowFIFOMessage.Emit("ODMap: Force enabling nametags");
+			var mod:GUIModuleIF = GUIModuleIF.FindModuleIF("ODMap");
+			mod.StoreConfig(config);
 		}
 	}
 
@@ -116,34 +119,29 @@ class com.fox.odmap.Mod
 		return size;
 	}
 
-	private function changeSize(delta)
+	private function onMouseWheel(delta)
 	{
+		var oldSize = config.FindEntry("Size");
 		if (delta > 0)
 		{
-			var currentSize:Number = config.FindEntry("Size");
-			currentSize += 5;
-			if (currentSize > 400) currentSize = 400;
-			ChangeSize(currentSize);
+			var newSize = oldSize + 5;
+			if (newSize > 400) newSize = 400;
+			if (newSize != oldSize) ChangeSize(newSize);
 		}
 		else
 		{
-			var currentSize:Number = config.FindEntry("Size");
-			currentSize -= 5;
-			if (currentSize < 100) currentSize = 100;
-			ChangeSize(currentSize);
+			var newSize = oldSize - 5;
+			if (newSize < 100) newSize = 100;
+			if (newSize != oldSize) ChangeSize(newSize);
 		}
 	}
 
 	private function ChangeSize(size)
 	{
 		config.ReplaceEntry("Size", size);
-		m_Map.setSize(config.FindEntry("Size"));
-		var pos:Point = Common.getOnScreen(m_Map.Image);
-		config.ReplaceEntry("Pos", pos);
-		m_Map.setPos(pos);
-		m_Tracker.CalculatePosToPixel();
+		m_Map.setSize(size);
+		ChangePos();
 		m_Tracker.ChangeScale();
-		m_Tracker.MoveMarkers();
 	}
 
 	private function ChangePos()
@@ -166,11 +164,13 @@ class com.fox.odmap.Mod
 	private function StartDrag()
 	{
 		m_Map.Image.startDrag();
+		m_Tracker.Hide();
 	}
 
 	private function StopDrag()
 	{
 		m_Map.Image.stopDrag();
+		m_Tracker.Show();
 		ChangePos();
 	}
 

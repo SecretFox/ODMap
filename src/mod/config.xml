@@ -32,19 +32,19 @@
 -->
 <root>
 	<!-- Player must be first-->
-	<layer name="Players" depth="19" keep="true" rotate="true" img="ODMap/assets/player.png" scale="0.65"></layer>
+	<layer name="Players" 		depth="19" keep="true" rotate="true" img="ODMap/assets/player.png" scale="0.65"></layer>
 	
 	<!-- Boss -->
 	<layer name="Boss" 			depth="24" namefilter="X44" color1="0xF89603" img="ODMap/assets/boss.png" scale="0.8"></layer>
 	
 	<!-- Commander, Titan -->
-	<layer name="Commander" 			depth="24" namefilter="C12,G55" color1="0xE10000" img="ODMap/assets/boss.png"></layer>
+	<layer name="Commander" 	depth="24" namefilter="C12,G55" color1="0xE10000" img="ODMap/assets/boss.png"></layer>
 	
 	<!-- Singularities, not removed on death-->
 	<layer name="Singularity"	depth="23" namefilter="W55" keep="true" 	color1="0xFFFFFF" img="ODMap/assets/enemy.png"></layer>
 
 	<!-- Healers -->
-	<layer name="Healer"	depth="22" bufffilter="9265842,9265842" img="ODMap/assets/healer.png" scale="0.5"></layer>
+	<layer name="Healer"		depth="22" bufffilter="9265842,9265842" img="ODMap/assets/healer.png" scale="0.5"></layer>
 	
 	<!-- Flamecaller -->
 	<layer name="Special" 		depth="21" namefilter="M27" img="ODMap/assets/flame.png" scale="0.7"></layer>

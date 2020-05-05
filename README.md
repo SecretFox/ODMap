@@ -21,5 +21,5 @@ By default:
 * Everything else = Red dot while not targeting player character, otherwise green dot
 	
 **Install**  
-Downloads can be found under Releases section
+Downloads can be found under Releases section  
 Unzip to `\Secret World Legends\Data\Gui\Custom\Flash`

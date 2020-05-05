@@ -1,3 +1,4 @@
+import com.fox.Utils.Common;
 import flash.geom.Point;
 import mx.utils.Delegate;
 /*
@@ -16,9 +17,10 @@ class com.fox.odmap.Map
 		callBack = cb;
 		listener = new Object();
 		listener.size = size;
-		listener.pos = pos;
 		listener.onLoadComplete = Delegate.create(this, LoadComplete);
 		Image = target.createEmptyMovieClip("Image", target.getNextHighestDepth());
+		Image._x = pos.x;
+		Image._y = pos.y;
 		var loader:MovieClipLoader = new MovieClipLoader();
 		loader.addListener(listener);
 		loader.loadClip("ODMap/assets/map.png",Image);
@@ -27,10 +29,12 @@ class com.fox.odmap.Map
 	private function LoadComplete()
 	{
 		Image._width = Image._height = listener.size;
-		setPos(listener.pos);
-		listener = undefined;
+		var pos = Common.getOnScreen(Image);
+		Image._x = pos.x;
+		Image._y = pos.y;
 		callBack();
 		callBack = undefined;
+		listener = undefined;
 	}
 
 	public function setSize(size)
