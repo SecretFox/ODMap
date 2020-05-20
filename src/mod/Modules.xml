@@ -4,7 +4,7 @@
     movie       = "ODMap\ODMap.swf"
     flags       = "GMF_CFG_STORE_USER_CONFIG | GMF_DONT_UNLOAD"
     depth_layer = "Middle"
-    sub_depth   = "2"
+    sub_depth   = "3"
     variable    = "ODMap"
     criteria    = "ODMap &amp;&amp; (guimode &amp; (GUIMODEFLAGS_INPLAY | GUIMODEFLAGS_ENABLEALLGUI))"
 	config_name = "ODMap_Cfg"

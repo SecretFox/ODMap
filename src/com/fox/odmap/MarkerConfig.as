@@ -9,10 +9,12 @@ class com.fox.odmap.MarkerConfig
 	public var rotate:Boolean;
 	public var identifier:String;
 	public var targetClip:MovieClip;
+	public var deathTooltip:Boolean;
 	public var namefilter:Array;
 	public var bufffilter:Array;
 	public var color1;
 	public var color2;
 	public var keep:Boolean;
-	public var img:String;
+	public var iimg:String;
+	public var eimg:String;
 }

@@ -3,6 +3,7 @@ import com.GameInterface.DistributedValue;
 import com.GameInterface.DistributedValueBase;
 import com.GameInterface.GUIModuleIF;
 import com.GameInterface.Game.Character;
+import com.GameInterface.WaypointInterface;
 import com.Utils.Archive;
 import com.Utils.GlobalSignal;
 import com.fox.Utils.Common;
@@ -21,8 +22,11 @@ class com.fox.odmap.Mod
 	private var m_Map:Map;
 	private var m_Tracker:Tracker;
 	private var config:Archive;
+	private var hideMinimap:DistributedValue;
 	private var mouseListener:Object;
 	private var nametagsEnabled:DistributedValue;
+	private var loaded:Boolean;
+	static var inStoneHenge:Boolean;
 
 	public function Mod(root)
 	{
@@ -30,23 +34,69 @@ class com.fox.odmap.Mod
 		mouseListener = new Object();
 		mouseListener.onMouseWheel = Delegate.create(this, onMouseWheel);
 		nametagsEnabled = DistributedValue.Create("ShowVicinityNPCNametags");
+		hideMinimap = DistributedValue.Create("ODMap_HideMinimap");
 	}
-
-	static function IsODZone()
+	
+	static function IsStoneHenge(zone)
 	{
-		return Character.GetClientCharacter().GetPlayfieldID() == 7670;
+		inStoneHenge = zone == 7670;
+		return inStoneHenge;
 	}
-
+	
+	public function Load()
+	{
+		hideMinimap.SignalChanged.Connect(SettingsChanged, this);
+		WaypointInterface.SignalPlayfieldChanged.Connect(PlayfieldChanged, this);
+		GlobalSignal.SignalSetGUIEditMode.Connect(GuiEdit, this);
+	}
+	
+	public function Unload()
+	{
+		hideMinimap.SignalChanged.Disconnect(SettingsChanged, this);
+		WaypointInterface.SignalPlayfieldChanged.Disconnect(PlayfieldChanged, this);
+		GlobalSignal.SignalSetGUIEditMode.Disconnect(GuiEdit, this);
+	}
+	
 	public function Activate(conf:Archive)
 	{
 		config = conf;
-		if (IsODZone())
+		if (!loaded)
 		{
+			loaded = true;
+			PlayfieldChanged(Character.GetClientCharacter().GetPlayfieldID());
+		}
+		
+	}
+	
+	public function Deactivate():Archive
+	{
+		return config
+	}
+	
+	public function SettingsChanged(dv:DistributedValue)
+	{
+		config.ReplaceEntry("hide", dv.GetValue());
+		if (dv.GetValue() && inStoneHenge) DistributedValueBase.SetDValue("hud_map_window", false);
+		else DistributedValueBase.SetDValue("hud_map_window", true);
+	}
+	
+	public function PlayfieldChanged(zone)
+	{
+		if (IsStoneHenge(zone))
+		{
+			if (config.FindEntry("hide"))
+			{
+				DistributedValueBase.SetDValue("hud_map_window", false);
+			}
 			SavePreferences();
-			if (!Container) DrawMap();
+			if (!Container) AttachMap();
 		}
 		else
 		{
+			if (config.FindEntry("hide"))
+			{
+				DistributedValueBase.SetDValue("hud_map_window", true);
+			}
 			if (config.FindEntry("NametagsEnabled"))
 			{
 				nametagsEnabled.SetValue(false);
@@ -81,28 +131,12 @@ class com.fox.odmap.Mod
 		}
 	}
 
-	private function DrawMap()
-	{
-		if (!_root.mainmenuwindow)
-		{
-			setTimeout(Delegate.create(this, DrawMap), 100);
-			return
-		}
-		Container = m_swfRoot.createEmptyMovieClip("MapContainer", m_swfRoot.getNextHighestDepth());
-		AttachMap();
-	}
-
-	public function Deactivate():Archive
-	{
-		return config
-	}
-
 	private function getMapPos()
 	{
 		var pos:Point = config.FindEntry("Pos");
 		if (!pos)
 		{
-			pos = new Point(Stage.width-200,DistributedValueBase.GetDValue("MinimapTopOffset"));
+			pos = new Point(Stage.width - 200, DistributedValueBase.GetDValue("MinimapTopOffset"));
 			config.ReplaceEntry("Pos", pos)
 		}
 		return pos;
@@ -121,6 +155,10 @@ class com.fox.odmap.Mod
 
 	private function onMouseWheel(delta)
 	{
+		if (Mouse.getTopMostEntity() != Container)
+		{
+			return
+		}
 		var oldSize = config.FindEntry("Size");
 		if (delta > 0)
 		{
@@ -153,12 +191,18 @@ class com.fox.odmap.Mod
 		m_Tracker.MoveMarkers();
 	}
 
-	private function AttachMap()
+	private function AttachMap(temp)
 	{
-		var callback = Delegate.create(this, AttachTracker);
-		m_Map = new Map(Container,getMapPos(),getMapSize(),callback);
-		GlobalSignal.SignalSetGUIEditMode.Connect(GuiEdit, this);
-		GuiEdit(false);
+		Container = m_swfRoot.createEmptyMovieClip("MapContainer", m_swfRoot.getNextHighestDepth());
+		var callback;
+		if(inStoneHenge) callback = Delegate.create(this, MapLoaded);
+		m_Map = new Map(Container, getMapPos(), getMapSize(), callback);
+		if(inStoneHenge) GuiEdit(false);
+	}
+	
+	private function MapLoaded()
+	{
+		AttachTracker();
 	}
 
 	private function StartDrag()
@@ -178,13 +222,21 @@ class com.fox.odmap.Mod
 	{
 		if (state)
 		{
-			m_Map.Image.onPress = Delegate.create(this, StartDrag);
-			m_Map.Image.onRelease = m_Map.Image.onReleaseOutside = Delegate.create(this, StopDrag);
+			if (!inStoneHenge)
+			{
+				if (!Container) AttachMap(true);
+			}
+			Container.onPress = Delegate.create(this, StartDrag);
+			Container.onRelease = Container.onReleaseOutside = Delegate.create(this, StopDrag);
 			Mouse.addListener(mouseListener);
 		}
 		else
 		{
-			m_Map.Image.onPress = m_Map.Image.onRelease = m_Map.Image.onReleaseOutside = undefined;
+			Container.onPress = Container.onRelease = Container.onReleaseOutside = undefined;
+			if (!inStoneHenge)
+			{
+				removeMap();
+			}
 			Mouse.removeListener(mouseListener);
 		}
 	}

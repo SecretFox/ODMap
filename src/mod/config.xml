@@ -1,8 +1,12 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <!-- 
 	Keep depths above 0, highest dpth value = topmost 
+	iimg, eimg = internal image or external image path,
+		iimg = "src.assets.enemy.png" 
+		eimg = "ODMap/assets/enemy.png" or "rdb:1000624:6698994"
 	color1 is image tint when enemy is not targeting player character
 	color2 is image tint when enemy IS targeting player character
+	deathTooltip, Singularity only, when enabled mod will display singularitys time since death on tooltip and map, they expire roughly after 7½ minutes
 	keep determines if the image should be removed when the mob dies
 	namefilter is comma separated list of (partial) strings that get checked against mob name
 	bufffilter is comma separated list of buffID's that get checked against targets buffs
@@ -32,32 +36,32 @@
 -->
 <root>
 	<!-- Player must be first-->
-	<layer name="Players" 		depth="19" keep="true" rotate="true" img="ODMap/assets/player.png" scale="0.65"></layer>
+	<layer name="Players" 		depth="19" keep="true" rotate="true" iimg="src.assets.player.png" scale="0.65"></layer>
 	
 	<!-- Boss -->
-	<layer name="Boss" 			depth="24" namefilter="X44" color1="0xF89603" img="ODMap/assets/boss.png" scale="0.8"></layer>
+	<layer name="Boss" 			depth="24" namefilter="X44" color1="0xF89603" iimg="src.assets.boss.png" scale="0.8"></layer>
 	
 	<!-- Commander, Titan -->
-	<layer name="Commander" 	depth="24" namefilter="C12,G55" color1="0xE10000" img="ODMap/assets/boss.png"></layer>
+	<layer name="Commander" 	depth="24" namefilter="C12,G55" color1="0xE10000" iimg="src.assets.boss.png"></layer>
 	
 	<!-- Singularities, not removed on death-->
-	<layer name="Singularity"	depth="23" namefilter="W55" keep="true" 	color1="0xFFFFFF" img="ODMap/assets/enemy.png"></layer>
+	<layer name="Singularity"	depth="23" namefilter="W55" keep="true" 	deathTooltip="true" color1="0xFFFFFF" iimg="src.assets.enemy.png"></layer>
 
 	<!-- Healers -->
-	<layer name="Healer"		depth="22" bufffilter="9265842,9265842" img="ODMap/assets/healer.png" scale="0.5"></layer>
+	<layer name="Healer"		depth="22" bufffilter="9265842,9265842" iimg="src.assets.healer.png" scale="0.5"></layer>
 	
 	<!-- Flamecaller -->
-	<layer name="Special" 		depth="21" namefilter="M27" img="ODMap/assets/flame.png" scale="0.7"></layer>
+	<layer name="Special" 		depth="21" namefilter="M27" iimg="src.assets.flame.png" scale="0.7"></layer>
 	
 	<!-- Hunter -->
-	<layer name="Special" 		depth="21" namefilter="H49" color1="0xBBBBBB" img="ODMap/assets/boss.png" scale="0.8"></layer>
+	<layer name="Special" 		depth="21" namefilter="H49" color1="0xBBBBBB" iimg="src.assets.boss.png" scale="0.8"></layer>
 	
 	<!-- Zapper -->
-	<layer name="Special" 		depth="21" namefilter="E11" img="ODMap/assets/c4.png" scale="0.75"></layer>
+	<layer name="Special" 		depth="21" namefilter="E11" iimg="src.assets.c4.png" scale="0.75"></layer>
 	
 	<!-- Titanspawn -->
-	<layer name="Special" 		depth="21" namefilter="G56" img="ODMap/assets/boss.png" color1="0xE10000" scale="0.5"></layer>
+	<layer name="Special" 		depth="21" namefilter="G56" iimg="src.assets.boss.png" color1="0xE10000" scale="0.5"></layer>
 	
 	<!-- Rest, catch all filter -->
-	<layer name="Normal" 		depth="20" color1="0xC10000" color2="0x01EB07" img="ODMap/assets/enemy.png" scale="0.75"></layer>
+	<layer name="Normal" 		depth="20" color1="0xC10000" color2="0x01EB07" iimg="src.assets.enemy.png" scale="0.75"></layer>
 </root>

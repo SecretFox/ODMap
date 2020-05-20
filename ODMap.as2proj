@@ -47,6 +47,7 @@
     <asset path="src\assets\map.png" bitmap="False" />
     <asset path="src\assets\healer.png" bitmap="False" />
     <asset path="src\assets\flame.png" bitmap="False" />
+    <asset path="src\assets\gfxfontlib.swf" update="..\..\assets\gfxfontlib.swf" />
   </library>
   <!-- Paths to exclude from the Project Explorer tree -->
   <hiddenPaths>

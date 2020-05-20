@@ -5,6 +5,7 @@ Overlay map for Stonehenge Occult Defence.
   
 **Usage / Configuration**  
 Map is only visible during Occult Defence scenario.  
+`/option ODMap_HideMinimap true/false` will control whether default minimap should be hidden or not  
 Can be moved and resized while GUI is unlocked.  
 There is no zoom.  
 Portals are not visible.  
@@ -14,7 +15,7 @@ By default:
 * Boss = Big orange skull  
 * Commander,Titan = Huge red skull  
 * Titanspawn = Small red skull  
-* Singularity = Medium white dot, kept after death  
+* Singularity = Medium white dot, kept after death, also displays time since death  
 * Healers = Green crosses  
 * Flamecalled = flame  
 * Zapper = Dynamite  
