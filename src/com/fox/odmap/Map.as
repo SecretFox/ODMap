@@ -20,7 +20,7 @@ class com.fox.odmap.Map
 		Image._y = pos2.y;
 		cb();
 	}
-	
+
 	public function setSize(size)
 	{
 		Image._width = Image._height = size;

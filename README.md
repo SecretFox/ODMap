@@ -7,6 +7,7 @@ Overlay map for Stonehenge Occult Defence.
 Map is only visible during Occult Defence scenario.  
 `/option ODMap_HideMinimap true/false` will control whether default minimap should be hidden or not  
 Can be moved and resized while GUI is unlocked.  
+Missing features:  
 There is no zoom.  
 Portals are not visible.  
   

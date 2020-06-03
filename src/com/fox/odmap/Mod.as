@@ -36,27 +36,27 @@ class com.fox.odmap.Mod
 		nametagsEnabled = DistributedValue.Create("ShowVicinityNPCNametags");
 		hideMinimap = DistributedValue.Create("ODMap_HideMinimap");
 	}
-	
+
 	static function IsStoneHenge(zone)
 	{
 		inStoneHenge = zone == 7670;
 		return inStoneHenge;
 	}
-	
+
 	public function Load()
 	{
 		hideMinimap.SignalChanged.Connect(SettingsChanged, this);
 		WaypointInterface.SignalPlayfieldChanged.Connect(PlayfieldChanged, this);
 		GlobalSignal.SignalSetGUIEditMode.Connect(GuiEdit, this);
 	}
-	
+
 	public function Unload()
 	{
 		hideMinimap.SignalChanged.Disconnect(SettingsChanged, this);
 		WaypointInterface.SignalPlayfieldChanged.Disconnect(PlayfieldChanged, this);
 		GlobalSignal.SignalSetGUIEditMode.Disconnect(GuiEdit, this);
 	}
-	
+
 	public function Activate(conf:Archive)
 	{
 		config = conf;
@@ -65,21 +65,72 @@ class com.fox.odmap.Mod
 			loaded = true;
 			PlayfieldChanged(Character.GetClientCharacter().GetPlayfieldID());
 		}
-		
+
 	}
-	
+
 	public function Deactivate():Archive
 	{
 		return config
 	}
-	
+	/*
+	static function GetCachedLegend(id:ID32)
+	{
+		var entries:Array = config.FindEntryArray("legend");
+		for (var i:Number = 0; i < entries.length; i++){
+			var data:Array = entries[i].split(",");
+			if (data[0] == id.toString()) return data[1];
+		}
+	}
+
+	static function CacheLegend(id:ID32, time:Number)
+	{
+		var entries:Array = config.FindEntryArray("legend");
+		if (!entries) entries = [];
+		var found;
+		for (var i:Number = 0; i < entries.length; i++){
+			var data:Array = entries[i].split(",");
+			if (data[0] == id.toString()) found = i;
+		}
+		if (found == undefined) entries.push([id, time].join(","));
+		else entries[found] = [id, time].join(",")
+		Mod.config.DeleteEntry("legend");
+		for (var i:Number = 0; i < entries.length; i++){
+			config.AddEntry("legend", entries[i]);
+		}
+	}
+
+	static function ClearCachedLegend(id:ID32)
+	{
+		var entries:Array = config.FindEntryArray("legend");
+		for (var i:Number = 0; i < entries.length; i++){
+			var data:Array = entries[i].split(",");
+			if (data[0] == id.toString())
+			{
+				entries.splice(i,1);
+				config.DeleteEntry("legend");
+				for (var y:Number = 0; y < entries.length; y++)
+				{
+					config.AddEntry("legend", entries[y]);
+				}
+				break
+			}
+		}
+	}
+
+	static function ClearAllCachedLegends()
+	{
+		config.DeleteEntry("legend");
+		var mod:GUIModuleIF = GUIModuleIF.FindModuleIF("ODMap");
+		mod.StoreConfig(config);
+	}
+	*/
 	public function SettingsChanged(dv:DistributedValue)
 	{
 		config.ReplaceEntry("hide", dv.GetValue());
 		if (dv.GetValue() && inStoneHenge) DistributedValueBase.SetDValue("hud_map_window", false);
 		else DistributedValueBase.SetDValue("hud_map_window", true);
 	}
-	
+
 	public function PlayfieldChanged(zone)
 	{
 		if (IsStoneHenge(zone))
@@ -105,6 +156,7 @@ class com.fox.odmap.Mod
 			if (Container)
 			{
 				removeMap();
+				//ClearAllCachedLegends();
 			}
 		}
 	}
@@ -155,7 +207,7 @@ class com.fox.odmap.Mod
 
 	private function onMouseWheel(delta)
 	{
-		if (Mouse.getTopMostEntity() != Container)
+		if (Mouse.getTopMostEntity() != Container.Image)
 		{
 			return
 		}
@@ -187,19 +239,20 @@ class com.fox.odmap.Mod
 		var pos:Point = Common.getOnScreen(m_Map.Image);
 		config.ReplaceEntry("Pos", pos);
 		m_Map.setPos(pos);
-		m_Tracker.CalculatePosToPixel();
+		m_Tracker.CalculateLocToPixel();
 		m_Tracker.MoveMarkers();
+		m_Tracker.m_Legend.UpdatePosSize();
 	}
 
 	private function AttachMap(temp)
 	{
 		Container = m_swfRoot.createEmptyMovieClip("MapContainer", m_swfRoot.getNextHighestDepth());
 		var callback;
-		if(inStoneHenge) callback = Delegate.create(this, MapLoaded);
+		if (inStoneHenge) callback = Delegate.create(this, MapLoaded);
 		m_Map = new Map(Container, getMapPos(), getMapSize(), callback);
-		if(inStoneHenge) GuiEdit(false);
+		if (inStoneHenge) GuiEdit(false);
 	}
-	
+
 	private function MapLoaded()
 	{
 		AttachTracker();
@@ -226,13 +279,13 @@ class com.fox.odmap.Mod
 			{
 				if (!Container) AttachMap(true);
 			}
-			Container.onPress = Delegate.create(this, StartDrag);
-			Container.onRelease = Container.onReleaseOutside = Delegate.create(this, StopDrag);
+			Container.Image.onPress = Delegate.create(this, StartDrag);
+			Container.Image.onRelease = Container.Image.onReleaseOutside = Delegate.create(this, StopDrag);
 			Mouse.addListener(mouseListener);
 		}
 		else
 		{
-			Container.onPress = Container.onRelease = Container.onReleaseOutside = undefined;
+			Container.Image.onPress = Container.Image.onRelease = Container.Image.onReleaseOutside = undefined;
 			if (!inStoneHenge)
 			{
 				removeMap();

@@ -23,12 +23,12 @@ class com.fox.odmap.Main
 	{
 		s_app.Load();
 	}
-	
+
 	public static function OnUnload()
 	{
 		s_app.Unload();
 	}
-	
+
 	public static function OnActivated(config: Archive):Void
 	{
 		s_app.Activate(config);

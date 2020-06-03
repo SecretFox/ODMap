@@ -1,19 +1,17 @@
 import com.GameInterface.Chat;
-import com.GameInterface.DistributedValueBase;
 import com.GameInterface.Game.Camera;
 import com.GameInterface.Game.Character;
-import com.GameInterface.Game.CharacterBase;
 import com.GameInterface.Game.Team;
 import com.GameInterface.Game.TeamInterface;
 import com.GameInterface.MathLib.Vector3;
 import com.GameInterface.Nametags;
-import com.GameInterface.WaypointInterface;
 import com.Utils.Colors;
 import com.Utils.ID32;
 import com.Utils.Signal;
+import com.fox.odmap.Legend;
 import com.fox.odmap.MarkerConfig;
+import com.fox.odmap.MarkerConfigLegend;
 import com.fox.odmap.MarkerObject;
-import com.fox.odmap.Mod;
 import mx.utils.Delegate;
 /*
 * ...
@@ -21,8 +19,11 @@ import mx.utils.Delegate;
 */
 class com.fox.odmap.Tracker
 {
-	private var mapRoot:MovieClip;
+	static var mapRoot:MovieClip;
 	private var m_Player:Character;
+	private var loadListener:Object;
+	public var SignalLoadFailed:Signal;
+	public var m_Legend:Legend;
 
 	// Config
 	private var trackerConfig:Array;
@@ -35,30 +36,27 @@ class com.fox.odmap.Tracker
 	private var checkTimeout;
 
 	// Map data, could be supplied in xml for multiple map support
-	private var minX = 160;
-	private var maxX = 348;
-	private var posToDist;
-	private var posToDist2;
+	private static var minX = 160;
+	private static var maxX = 348;
+	private static var LocToPix;
+	private static var posToDist2;
+	private static var mapScale;
 
 	// Stonehenge is perfectly centered circle,no need for Y
 	//private var minY = 160;
 	//private var maxY = 348;
 
-	private var mapScale;
-
-	private var loadListener:Object;
-	public var SignalLoadFailed:Signal;
-
 	public function Tracker(mapclip:MovieClip)
 	{
 		mapRoot = mapclip;
+		m_Legend = new Legend(mapRoot, this);
 		m_Player = Character.GetClientCharacter();
 		markerArray = [];
 		trackerConfig = [];
 		checkQueue = [];
 		loadListener = new Object();
-		loadListener.onLoadComplete  = Delegate.create(this, ImageLoaded);
-		loadListener.onLoadError   = Delegate.create(this, ImgFailed);
+		loadListener.onLoadComplete = Delegate.create(this,ImageLoaded);
+		loadListener.onLoadError = Delegate.create(this,ImageFailed);
 		SignalLoadFailed = new Signal();
 		XMLFile = new XML();
 		XMLFile.ignoreWhite = true;
@@ -68,11 +66,13 @@ class com.fox.odmap.Tracker
 	public function Hide()
 	{
 		for (var i in markerArray) MarkerObject(markerArray[i]).imgClip._visible = false;
+		m_Legend.Hide();
 	}
 
 	public function Show()
 	{
 		for (var i in markerArray) MarkerObject(markerArray[i]).imgClip._visible = true;
+		m_Legend.Unhide();
 	}
 
 	public function Start()
@@ -82,19 +82,12 @@ class com.fox.odmap.Tracker
 
 	private function StartTracking()
 	{
-		WaypointInterface.SignalPlayfieldChanged.Connect(PlayfieldChanged, this);
-		if (!DistributedValueBase.GetDValue("ShowPlayerNametag"))
+		AddToQueue(m_Player.GetID());
+		var team:Team = TeamInterface.GetClientTeamInfo();
+		for (var i in team.m_TeamMembers)
 		{
-			AddToQueue(CharacterBase.GetClientCharID());
-		}
-		if (!DistributedValueBase.GetDValue("ShowVicinityPlayerNametags"))
-		{
-			var team:Team = TeamInterface.GetClientTeamInfo();
-			for (var i in team.m_TeamMembers)
-			{
-				var teamMember = team.m_TeamMembers[i];
-				AddToQueue(teamMember["m_CharacterId"]);
-			}
+			var teamMember = team.m_TeamMembers[i];
+			AddToQueue(teamMember["m_CharacterId"]);
 		}
 		Nametags.SignalNametagAdded.Connect(AddToQueue, this);
 		Nametags.SignalNametagUpdated.Connect(AddToQueue, this);
@@ -102,15 +95,11 @@ class com.fox.odmap.Tracker
 		Nametags.RefreshNametags();
 	}
 
-	private function PlayfieldChanged()
-	{
-		if (!Mod.IsStoneHenge(com.GameInterface.Game.Character.GetClientCharacter().GetPlayfieldID)) Disconnect();
-	}
-
 	public function Disconnect()
 	{
 		ClearMarkers();
-		WaypointInterface.SignalPlayfieldChanged.Disconnect(PlayfieldChanged, this);
+		m_Legend.Stop();
+		m_Legend = undefined;
 		Nametags.SignalNametagAdded.Disconnect(AddToQueue, this);
 		Nametags.SignalNametagUpdated.Disconnect(AddToQueue, this);
 		Nametags.SignalNametagRemoved.Disconnect(ClearMarker, this);
@@ -122,17 +111,30 @@ class com.fox.odmap.Tracker
 		if (success)
 		{
 			var content:XMLNode = XMLFile.firstChild;
+			var scaleMulti = Number(content.attributes.scale) || 1;
 			for (var i = 0; i < content.childNodes.length; i++ )
 			{
 				var filterNode:XMLNode = content.childNodes[i];
 				var config:MarkerConfig = new MarkerConfig();
 				config.depth = Number(filterNode.attributes.depth | 0);
-				config.scale = Number(filterNode.attributes.scale) || 1;
+				config.scale = scaleMulti * Number(filterNode.attributes.scale) || 1 * scaleMulti;
 				config.color1 = filterNode.attributes.color1;
 				config.color2 = filterNode.attributes.color2;
 				config.rotate = filterNode.attributes.rotate == "true";
 				config.keep = filterNode.attributes.keep == "true";
-				config.deathTooltip = filterNode.attributes.deathTooltip == "true";
+				var temp = filterNode.attributes.legend;
+				if (temp)
+				{
+					var values = temp.split(",");
+					var legend:MarkerConfigLegend = new MarkerConfigLegend();
+					legend.id = values[0];
+					legend.type = values[1];
+					legend.duration = values[2];
+					legend.direction = values[3];
+					legend.force = values[4] == "true";
+					legend.checkFunction = eval(values[5]);
+					config.legend = legend;
+				}
 				config.identifier = filterNode.attributes.name+i;
 				config.namefilter = filterNode.attributes.namefilter.split(",");
 				config.bufffilter = filterNode.attributes.bufffilter.split(",");
@@ -150,7 +152,7 @@ class com.fox.odmap.Tracker
 				}
 				conf.targetClip = clip;
 			}
-			CalculatePosToPixel();
+			CalculateLocToPixel();
 			ChangeScale();
 			StartTracking();
 		}
@@ -162,9 +164,9 @@ class com.fox.odmap.Tracker
 		XMLFile = undefined;
 	}
 
-	public function CalculatePosToPixel()
+	public function CalculateLocToPixel()
 	{
-		posToDist = mapRoot.Image._width / (maxX - minX);
+		LocToPix = mapRoot.Image._width / (maxX - minX);
 		for (var i in trackerConfig)
 		{
 			MarkerConfig(trackerConfig[i]).targetClip._x =  mapRoot.Image._x;
@@ -191,27 +193,29 @@ class com.fox.odmap.Tracker
 		checkTimeout = setTimeout(Delegate.create(this, CheckTag), 100);
 	}
 
+	private function AlreadyTracking(id:ID32)
+	{
+		for (var i in markerArray)
+		{
+			var marker:MarkerObject = markerArray[i];
+			if (marker.char.GetID().toString() == id.toString())
+			{
+				return true;
+			}
+		}
+	}
+
 	private function CheckTag()
 	{
 		while (checkQueue.length>0)
 		{
 			var id:ID32 = ID32(checkQueue.pop());
-			var char:Character = new Character(id);
-			var found;
-			for (var i in markerArray)
+			if (!AlreadyTracking(id))
 			{
-				var marker:MarkerObject = markerArray[i];
-				if (marker.char.GetID().toString() == id.toString())
-				{
-					found = true;
-					break
-				}
-			}
-			if (!found)
-			{
+				var char:Character = Character.GetCharacter(id);
 				if (id.IsPlayer())
 				{
-					AddMarker(char,trackerConfig[0]);
+					AddMarker(char, trackerConfig[0]);
 				}
 				else
 				{
@@ -257,7 +261,7 @@ class com.fox.odmap.Tracker
 		}
 	}
 
-	private function ImgFailed(img:MovieClip)
+	private function ImageFailed(img:MovieClip)
 	{
 		for (var i in markerArray)
 		{
@@ -267,7 +271,6 @@ class com.fox.odmap.Tracker
 				break;
 			}
 		}
-
 	}
 
 	private function ImageLoaded(img)
@@ -278,7 +281,6 @@ class com.fox.odmap.Tracker
 
 	private function AddMarker(char:Character, config:MarkerConfig)
 	{
-	//init
 		var imgLoader:MovieClipLoader;
 		var marker:MarkerObject = new MarkerObject();
 		if (char.IsClientChar()) marker.client = true;
@@ -304,116 +306,177 @@ class com.fox.odmap.Tracker
 			marker.imgClip._y = -marker.imgClip._height / 2;
 		}
 		if (config.color1) CreateColor(marker, config);
-		if (config.deathTooltip) CreateDeathMarker(marker, config);
+		if (config.legend) CreateLegend(marker, config, m_Legend);
 		clearInterval(updateInterval);
 		updateInterval = setInterval(Delegate.create(this, MoveMarkers), 50);
 		MoveMarkers();
 	}
-	
+
 	static function CreateColor(marker:MarkerObject, config:MarkerConfig)
 	{
 		if (config.color1 == config.color2 || !config.color2)
 		{
+			marker.currentColor = config.color1;
 			Colors.ApplyColor(marker.imgClip, config.color1);
 		}
 		else
 		{
 			if (marker.char.GetOffensiveTarget().IsPlayer())
 			{
+				marker.currentColor = config.color2;
 				Colors.ApplyColor(marker.imgClip, config.color2);
 			}
 			else
 			{
+				marker.currentColor = config.color1;
 				Colors.ApplyColor(marker.imgClip,  config.color1);
 			}
-			marker.slot = marker.char.SignalOffensiveTargetChanged.Connect(function()
+			var f:Function = function()
 			{
-				if (!marker.char.GetOffensiveTarget().IsPlayer()) Colors.ApplyColor(marker.imgClip,  config.color1);
-				else Colors.ApplyColor(marker.imgClip, config.color2);
-			});
-		}
-	}
-	
-	static function CreateTimer(marker)
-	{
-		var f:Function = function()
-		{
-			var time =  Tracker.GetTimeString((new Date()).getTime(), marker.deathTime);
-			
-			if (marker.deathClip)
-			{
-				Tracker.HideOverlapping(marker);
-				marker.deathClip.text = time;
+				if (!marker.char.GetOffensiveTarget().IsPlayer())
+				{
+					marker.currentColor = config.color1;
+					Colors.ApplyColor(marker.imgClip,  config.color1);
+				}
+				else
+				{
+					marker.currentColor = config.color2;
+					Colors.ApplyColor(marker.imgClip, config.color2);
+				}
 			}
-			var idx = _root.nametagcontroller.GetNametagIndex(marker.char.GetID());
-			if (idx)
-			{
-				_root.nametagcontroller.m_NametagArray[idx].m_Name.text = marker.char.GetName() + " " + time
-			}
-			
+			marker.char.SignalOffensiveTargetChanged.Connect(marker.m_Signals, f);
 		}
-		marker.deathinterval = setInterval(f, 1000);
-		f();
 	}
 
-	static function GetTimeString(end:Number, start:Number)
+	static function CreateLegend(marker:MarkerObject, config:MarkerConfig, m_Legend:Legend)
 	{
-		return com.Utils.Format.Printf( "%02.0f:%02.0f", Math.floor((end-start) / 60000), Math.round((end-start)  / 1000) % 60);
-	}
-	
-	/* 
-	* Checks supplied marker against all other markers, 
-	* and hides it if there's overlapping older(but not if there's over 15s difference in the timer) marker at the location
-	* displays the marker again if no overlapping markers is found
-	*/
-	static function HideOverlapping(marker:MarkerObject)
-	{
-		var found;
-		for (var i in Tracker.markerArray)
+		// Buff added
+		if (config.legend.type == "abuff")
 		{
-			var marker2:MarkerObject = Tracker.markerArray[i];
-			if (marker != marker2 &&
-				marker2.deathClip &&
-				marker.containerClip.hitTest(marker2.containerClip) &&
-				Math.abs(marker.deathTime - marker2.deathTime) < 15000 &&
-				marker.deathTime > marker2.deathTime)
+			var f:Function = function(buffID)
 			{
-				marker.deathClip._alpha = 0;
-				found = true;
-				if (marker2.containerClip.getDepth() < marker.containerClip.getDepth())
+				if (string(buffID) == config.legend.id)
 				{
-					marker2.containerClip.swapDepths(marker.containerClip);
+					var GameTime:Number = com.GameInterface.UtilsBase.GetNormalTime() * 1000;
+					var time;
+					var ExpireTime;
+					if (marker.char.m_InvisibleBuffList[buffID])
+					{
+						time = marker.char.m_InvisibleBuffList[buffID].m_TotalTime;
+					}
+					else if (marker.char.m_BuffList[buffID])
+					{
+						time = marker.char.m_BuffList[buffID].m_TotalTime;
+					}
+					if (time <= GameTime)
+					{
+						ExpireTime = true;
+					}
+					m_Legend.AddEntry(marker, marker.char.GetID(), time, config.legend, ExpireTime);
+					//Mod.CacheLegend(marker.char.GetID(), time);
 				}
-				break;
 			}
-		}
-		if (!found)
-		{
-			marker.deathClip._alpha = 100;
-		}
-	}
-	
-	static function CreateDeathMarker(marker:MarkerObject, config:MarkerConfig)
-	{
-		var f:Function = function()
-		{
-			if(!marker.deathTime && 
-				(marker.char.m_InvisibleBuffList["9350410"] || marker.char.IsDead()))
+
+			marker.char.SignalBuffAdded.Connect(marker.m_Signals, f);
+			marker.char.SignalInvisibleBuffAdded.Connect(marker.m_Signals, f);
+			if (marker.char.m_BuffList[config.legend.id])
 			{
-				marker.deathTime = (new Date()).getTime();
-				marker.deathClip = marker.containerClip.createTextField("DeathClip", marker.containerClip.getNextHighestDepth(), 0, 0, 20, 20);
-				var font:TextFormat = new TextFormat("_StandardFont", 12, 0xFFFFFF, true);
-				marker.deathClip.setNewTextFormat(font);
-				marker.deathClip.setTextFormat(font);
-				marker.deathClip.background = true;
-				marker.deathClip.backgroundColor = 0x000000;
-				marker.deathClip.autoSize = true;
-				marker.deathClip.text = "00:00";
-				Tracker.CreateTimer(marker);
+				f(config.legend.id);
+			}
+			if (marker.char.m_InvisibleBuffList[config.legend.id])
+			{
+				f(config.legend.id);
 			}
 		}
-		marker.deathSlot = marker.char.SignalInvisibleBuffAdded.Connect(f);
-		f();
+
+		// Buff removed
+		if (config.legend.type == "rbuff")
+		{
+			var f:Function = function(buffID)
+			{
+				if (string(buffID) == config.legend.id)
+				{
+					var time:Number = com.GameInterface.UtilsBase.GetNormalTime()*1000;
+					m_Legend.AddEntry(marker, marker.char.GetID(), time, config.legend);
+					//Mod.CacheLegend(marker.char.GetID(), time);
+				}
+			}
+			marker.char.SignalBuffRemoved.Connect(marker.m_Signals);
+		}
+
+		//Finished Cast
+		if (config.legend.type == "fcast" ||
+				config.legend.type == "scast")
+		{
+			var f = function()
+			{
+				marker.currentCast = arguments[0];
+				if (arguments[0] == config.legend.id)
+				{
+					if (config.legend.type == "scast")
+					{
+						var time:Number = com.GameInterface.UtilsBase.GetNormalTime() * 1000;
+						m_Legend.AddEntry(marker, marker.char.GetID(), time, config.legend);
+						//Mod.CacheLegend(marker.char.GetID(), time);
+					}
+				}
+			}
+
+			var f2 = function ()
+			{
+				marker.currentCast = undefined;
+			}
+
+			var f3 = function ()
+			{
+				if (marker.currentCast == config.legend.id && config.legend.type == "fcast")
+				{
+					var time:Number = com.GameInterface.UtilsBase.GetNormalTime() * 1000;
+					m_Legend.AddEntry(marker, marker.char.GetID(), time, config.legend);
+					//Mod.CacheLegend(marker.char.GetID(), time);
+				}
+				marker.currentCast = undefined;
+
+			}
+			marker.char.SignalCommandStarted.Connect(marker.m_Signals, f);
+			marker.char.SignalCommandAborted.Connect(marker.m_Signals, f2);
+			marker.char.SignalCommandEnded.Connect(marker.m_Signals, f3);
+
+			/*
+			var newchar:Character = Character.GetCharacter(marker.char.GetID());
+			newchar.SignalBuffAdded.Connect(function(){
+				UtilsBase.PrintChatText(newchar.GetName() +" added " + arguments);
+				for (var i in newchar.m_BuffList){
+					UtilsBase.PrintChatText("-" + i);
+					for (var y in newchar.m_BuffList[i]){
+						UtilsBase.PrintChatText("--" + y+" " + newchar.m_BuffList[i][y]);
+					}
+				}
+			});
+			newchar.SignalBuffRemoved.Connect(function(){
+				UtilsBase.PrintChatText(newchar.GetName() +" removed " + arguments);
+			});
+			newchar.SignalInvisibleBuffAdded.Connect(function(){
+				UtilsBase.PrintChatText(newchar.GetName() +" added invisible " + arguments);
+				for (var i in newchar.m_InvisibleBuffList){
+					UtilsBase.PrintChatText("-" + i);
+					for (var y in newchar.m_InvisibleBuffList[i]){
+						UtilsBase.PrintChatText("--" + y+" " + newchar.m_InvisibleBuffList[i][y]);
+					}
+				}
+			});
+			newchar.SignalBuffAdded.Emit();
+			newchar.SignalInvisibleBuffAdded.Emit();
+			newchar.SignalBuffRemoved.Emit();
+			*/
+		}
+		/*
+		var time:Number = Mod.GetCachedLegend(marker.char.GetID());
+		if (time)
+		{
+			m_Legend.AddEntry(marker, marker.char.GetID(), time, config.legend);
+		}
+		*/
 	}
 
 	public function MoveMarkers()
@@ -428,8 +491,8 @@ class com.fox.odmap.Tracker
 				continue;
 			}
 			var pos:Vector3 = marker.char.GetPosition();
-			marker.containerClip._x = (pos.x - minX) * posToDist;
-			marker.containerClip._y = (maxX - pos.z) * posToDist;
+			marker.containerClip._x = (pos.x - minX) * LocToPix;
+			marker.containerClip._y = (maxX - pos.z) * LocToPix;
 			if (marker.config.rotate)
 			{
 				if (marker.client) marker.containerClip._rotation = -Camera.m_AngleY * 57.3;
@@ -440,18 +503,17 @@ class com.fox.odmap.Tracker
 
 	private function ClearMarker(id:ID32)
 	{
-		if id.IsPlayer() return;
+		if ( id.IsPlayer()) return;
 		for (var i in markerArray)
 		{
 			var marker:MarkerObject = markerArray[i];
 			if (marker.char.GetID().toString() == id.toString())
 			{
-				marker.char.SignalOffensiveTargetChanged.DisconnectSlot(marker.slot);
-				marker.char.SignalInvisibleBuffAdded.DisconnectSlot(marker.deathSlot);
-				clearInterval(marker.deathinterval);
+				marker.m_Signals.DisconnectAll();
 				marker.containerClip.removeMovieClip();
-				
-				delete markerArray[i];
+				m_Legend.RemoveEntry(marker.char.GetID());
+
+				markerArray.splice(Number(i), 1);
 				if (markerArray.length == 0)
 				{
 					clearInterval(updateInterval);
@@ -468,9 +530,8 @@ class com.fox.odmap.Tracker
 		for (var i in markerArray)
 		{
 			var marker:MarkerObject = markerArray[i];
-			marker.char.SignalOffensiveTargetChanged.DisconnectSlot(marker.slot);
-			marker.char.SignalInvisibleBuffAdded.DisconnectSlot(marker.deathSlot);
-			clearInterval(marker.deathinterval);
+			marker.m_Signals.DisconnectAll();
+			m_Legend.RemoveEntry(marker.char.GetID());
 			marker.containerClip.removeMovieClip()
 		}
 		markerArray = new Array();
