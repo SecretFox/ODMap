@@ -49,6 +49,10 @@
     <asset path="src\assets\flame.png" bitmap="False" />
     <asset path="src\assets\gfxfontlib.swf" update="..\..\assets\gfxfontlib.swf" />
     <asset path="src\assets\c4.png" bitmap="False" />
+    <asset path="src\assets\player2.png" bitmap="False" />
+    <asset path="src\assets\player3.png" bitmap="False" />
+    <asset path="src\assets\player4.png" bitmap="False" />
+    <asset path="src\assets\player5.png" bitmap="False" />
   </library>
   <!-- Paths to exclude from the Project Explorer tree -->
   <hiddenPaths>

@@ -8,7 +8,6 @@ import com.fox.odmap.MarkerConfig;
 class com.fox.odmap.MarkerObject
 {
 	public var containerClip:MovieClip;
-	public var currentColor;
 	public var imgClip:MovieClip;
 	public var client:Boolean;
 	public var m_Signals:SignalGroup;

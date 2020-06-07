@@ -6,8 +6,8 @@ import com.fox.odmap.MarkerConfigLegend;
  */
 class com.fox.odmap.LegendEntry
 {
-	static var RightText:String = "Right";
-	static var LeftText:String = "Left";
+	public var RightText:TextField;
+	public var LeftText:TextField;
 
 	public var ID:ID32;
 	public var TextRoot:MovieClip;

@@ -19,7 +19,7 @@ import mx.utils.Delegate;
 */
 class com.fox.odmap.Tracker
 {
-	static var mapRoot:MovieClip;
+	static var m_swfRoot:MovieClip;
 	private var m_Player:Character;
 	private var loadListener:Object;
 	public var SignalLoadFailed:Signal;
@@ -46,10 +46,10 @@ class com.fox.odmap.Tracker
 	//private var minY = 160;
 	//private var maxY = 348;
 
-	public function Tracker(mapclip:MovieClip)
+	public function Tracker(root:MovieClip)
 	{
-		mapRoot = mapclip;
-		m_Legend = new Legend(mapRoot, this);
+		m_swfRoot = root;
+		m_Legend = new Legend(root, this);
 		m_Player = Character.GetClientCharacter();
 		markerArray = [];
 		trackerConfig = [];
@@ -145,10 +145,10 @@ class com.fox.odmap.Tracker
 			for (var i in trackerConfig)
 			{
 				var conf:MarkerConfig = trackerConfig[i];
-				var clip = mapRoot.getInstanceAtDepth(conf.depth); // allow several entries to use same depth
+				var clip = m_swfRoot.getInstanceAtDepth(conf.depth); // allow several entries to use same depth
 				if (!clip)
 				{
-					clip = mapRoot.createEmptyMovieClip(conf.identifier, conf.depth);
+					clip = m_swfRoot.createEmptyMovieClip(conf.identifier, conf.depth);
 				}
 				conf.targetClip = clip;
 			}
@@ -166,17 +166,17 @@ class com.fox.odmap.Tracker
 
 	public function CalculateLocToPixel()
 	{
-		LocToPix = mapRoot.Image._width / (maxX - minX);
+		LocToPix = m_swfRoot.Image._width / (maxX - minX);
 		for (var i in trackerConfig)
 		{
-			MarkerConfig(trackerConfig[i]).targetClip._x =  mapRoot.Image._x;
-			MarkerConfig(trackerConfig[i]).targetClip._y =  mapRoot.Image._y;
+			MarkerConfig(trackerConfig[i]).targetClip._x =  m_swfRoot.Image._x;
+			MarkerConfig(trackerConfig[i]).targetClip._y =  m_swfRoot.Image._y;
 		}
 	}
 
 	public function ChangeScale()
 	{
-		mapScale = mapRoot.Image._width / 200;
+		mapScale = m_swfRoot.Image._width / 200;
 		for (var i in markerArray)
 		{
 			var marker:MarkerObject = markerArray[i];
@@ -215,7 +215,8 @@ class com.fox.odmap.Tracker
 				var char:Character = Character.GetCharacter(id);
 				if (id.IsPlayer())
 				{
-					AddMarker(char, trackerConfig[0]);
+					if char.IsClientChar() AddMarker(char, trackerConfig[0]);
+					else AddMarker(char, trackerConfig[1]);
 				}
 				else
 				{
@@ -230,7 +231,7 @@ class com.fox.odmap.Tracker
 		var name:String = char.GetName();
 		if (name != "GHOST") // Invisible being inside the hag stone
 		{
-			for (var i = 1; i < trackerConfig.length; i++)
+			for (var i = 2; i < trackerConfig.length; i++)
 			{
 				var config:MarkerConfig = trackerConfig[i];
 				if (!config.namefilter && !config.bufffilter)
@@ -316,31 +317,26 @@ class com.fox.odmap.Tracker
 	{
 		if (config.color1 == config.color2 || !config.color2)
 		{
-			marker.currentColor = config.color1;
 			Colors.ApplyColor(marker.imgClip, config.color1);
 		}
 		else
 		{
 			if (marker.char.GetOffensiveTarget().IsPlayer())
 			{
-				marker.currentColor = config.color2;
 				Colors.ApplyColor(marker.imgClip, config.color2);
 			}
 			else
 			{
-				marker.currentColor = config.color1;
 				Colors.ApplyColor(marker.imgClip,  config.color1);
 			}
 			var f:Function = function()
 			{
 				if (!marker.char.GetOffensiveTarget().IsPlayer())
 				{
-					marker.currentColor = config.color1;
 					Colors.ApplyColor(marker.imgClip,  config.color1);
 				}
 				else
 				{
-					marker.currentColor = config.color2;
 					Colors.ApplyColor(marker.imgClip, config.color2);
 				}
 			}
@@ -498,6 +494,8 @@ class com.fox.odmap.Tracker
 				if (marker.client) marker.containerClip._rotation = -Camera.m_AngleY * 57.3;
 				else marker.containerClip._rotation = -marker.char.GetRotation() * 57.3;
 			}
+			if marker.imgClip.hitTest(m_swfRoot.Image) marker.imgClip._visible = true;
+			else marker.imgClip._visible = false;
 		}
 	}
 

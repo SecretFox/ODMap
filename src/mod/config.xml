@@ -44,10 +44,12 @@
 		name="Pestilent" 	bufffilter="9458489"
 		name=Cursed"		bufffilter="9458487,9458485,94585469458545,9458544,9458488"
 -->
-<!-- This multiplies all scale values by this value-->
+<!-- This multiplies all scale values-->
 <root scale="1.00">
-	<!-- Player must be first-->
-	<layer name="Players" 		depth="19" keep="true" rotate="true" iimg="src.assets.player.png" scale="0.65"></layer>
+	<!-- Client must be first-->
+	<layer name="Client" 		depth="19" keep="true" rotate="true" iimg="src.assets.player.png" scale="0.65"></layer>
+	<!-- Players must be second-->
+	<layer name="Players" 		depth="19" keep="true" rotate="true" iimg="src.assets.player3.png" scale="0.65"></layer>
 	
 	<!-- Boss -->
 	<layer name="Boss" 			depth="24" namefilter="X44" color1="0xF89603" iimg="src.assets.boss.png" scale="0.8"></layer>
