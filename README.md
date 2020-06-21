@@ -9,9 +9,9 @@ Map is only visible during Occult Defence scenario.
 Can be moved and resized while GUI is unlocked.  
 Missing features:  
 There is no zoom.  
-Portals are not visible.  
+Portals are not visible. (seems impossible to fix)  
   
-You can edit config.xml which is included in the download to configure how mobs get displayed.  
+You can edit config.xml which is included in the download to configure how mobs/map get displayed.  
 By default:  
 * Boss = Big orange skull  
 * Commander,Titan = Huge red skull  

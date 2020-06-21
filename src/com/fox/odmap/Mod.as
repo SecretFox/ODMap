@@ -22,7 +22,8 @@ class com.fox.odmap.Mod
 	private var m_Map:Map;
 	private var m_Tracker:Tracker;
 	private var config:Archive;
-	private var hideMinimap:DistributedValue;
+	private var DvalHideMinimap:DistributedValue;
+	private var DvalReloadConfig:DistributedValue;
 	private var mouseListener:Object;
 	private var nametagsEnabled:DistributedValue;
 	private var loaded:Boolean;
@@ -34,7 +35,8 @@ class com.fox.odmap.Mod
 		mouseListener = new Object();
 		mouseListener.onMouseWheel = Delegate.create(this, onMouseWheel);
 		nametagsEnabled = DistributedValue.Create("ShowVicinityNPCNametags");
-		hideMinimap = DistributedValue.Create("ODMap_HideMinimap");
+		DvalHideMinimap = DistributedValue.Create("ODMap_HideMinimap");
+		DvalReloadConfig = DistributedValue.Create("ODMap_ReloadConfig");
 	}
 
 	static function IsStoneHenge(zone)
@@ -45,16 +47,18 @@ class com.fox.odmap.Mod
 
 	public function Load()
 	{
-		hideMinimap.SignalChanged.Connect(SettingsChanged, this);
+		DvalHideMinimap.SignalChanged.Connect(SettingsChanged, this);
 		WaypointInterface.SignalPlayfieldChanged.Connect(PlayfieldChanged, this);
 		GlobalSignal.SignalSetGUIEditMode.Connect(GuiEdit, this);
+		DvalReloadConfig.SignalChanged.Connect(ReloadConfig, this);
 	}
 
 	public function Unload()
 	{
-		hideMinimap.SignalChanged.Disconnect(SettingsChanged, this);
+		DvalHideMinimap.SignalChanged.Disconnect(SettingsChanged, this);
 		WaypointInterface.SignalPlayfieldChanged.Disconnect(PlayfieldChanged, this);
 		GlobalSignal.SignalSetGUIEditMode.Disconnect(GuiEdit, this);
+		DvalReloadConfig.SignalChanged.Disconnect(ReloadConfig, this);
 	}
 
 	public function Activate(conf:Archive)
@@ -65,12 +69,24 @@ class com.fox.odmap.Mod
 			loaded = true;
 			PlayfieldChanged(Character.GetClientCharacter().GetPlayfieldID());
 		}
-
 	}
 
 	public function Deactivate():Archive
 	{
 		return config
+	}
+	
+	private function ReloadConfig(dv:DistributedValue)
+	{
+		if (dv.GetValue())
+		{
+			if (Container)
+			{
+				removeMap();
+				AttachMap();
+			}
+			dv.SetValue(false);
+		}
 	}
 	/*
 	static function GetCachedLegend(id:ID32)

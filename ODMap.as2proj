@@ -53,6 +53,7 @@
     <asset path="src\assets\player3.png" bitmap="False" />
     <asset path="src\assets\player4.png" bitmap="False" />
     <asset path="src\assets\player5.png" bitmap="False" />
+    <asset path="src\assets\map_org.png" bitmap="False" />
   </library>
   <!-- Paths to exclude from the Project Explorer tree -->
   <hiddenPaths>
@@ -65,7 +66,8 @@
 xcopy "$(ProjectDir)\src\mod\*.*" "H:\Secret World Legends\Data\Gui\Custom\Flash\ODMap\*.*" /e /y
 
 xcopy "$(ProjectDir)\bin\*.*" "./deployment/ODMap/*.*" /e /y
-xcopy "$(ProjectDir)\src\mod\*.*" "./deployment/ODMap/*.*" /e /y</postBuildCommand>
+xcopy "$(ProjectDir)\src\mod\*.*" "./deployment/ODMap/*.*" /e /y
+xcopy "$(ProjectDir)\src\assets\*.png" "./deployment/ODMap/assets/*.*" /e /y</postBuildCommand>
   <!-- Other project options -->
   <options>
     <option showHiddenPaths="False" />

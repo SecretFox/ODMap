@@ -44,8 +44,15 @@
 		name="Pestilent" 	bufffilter="9458489"
 		name=Cursed"		bufffilter="9458487,9458485,94585469458545,9458544,9458488"
 -->
-<!-- This multiplies all scale values-->
-<root scale="1.00">
+<!--
+	scale multiplies all scale values
+	iimg loads map from inside the .swf, valid values are "src.assets.map.png" and "src.assets.map_org.png"
+	eimg loads img from path inside the mod folder e.g ODMap/assets/map_org.png, you can edit these images as you wish
+	minX is the smallest x Coordinate visible on the map, for included map this is 160
+	minX is the farmost x Coordinate visible on the map, for included map this is 348
+	As it happens the map is perfectly centered square, so these double as minY and maxY values (non square maps are enot supported)
+-->
+<root scale="1.20" iimg="src.assets.map_org.png" minX="160" maxX="348">
 	<!-- Client must be first-->
 	<layer name="Client" 		depth="19" keep="true" rotate="true" iimg="src.assets.player.png" scale="0.65"></layer>
 	<!-- Players must be second-->

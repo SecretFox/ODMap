@@ -35,12 +35,11 @@ class com.fox.odmap.Tracker
 	private var checkQueue:Array;
 	private var checkTimeout;
 
-	// Map data, could be supplied in xml for multiple map support
-	private static var minX = 160;
-	private static var maxX = 348;
-	private static var LocToPix;
-	private static var posToDist2;
-	private static var mapScale;
+	static var minX;
+	static var maxX;
+	static var LocToPix;
+	static var posToDist2;
+	static var mapScale;
 
 	// Stonehenge is perfectly centered circle,no need for Y
 	//private var minY = 160;
@@ -93,6 +92,12 @@ class com.fox.odmap.Tracker
 		Nametags.SignalNametagUpdated.Connect(AddToQueue, this);
 		Nametags.SignalNametagRemoved.Connect(ClearMarker, this);
 		Nametags.RefreshNametags();
+		/*VicinitySystem.SignalDynelEnterVicinity.Connect(EnteredVicinity, this);
+		for (var i = 0; i < Dynel.s_DynelList.GetLength(); i++){
+			var dynel:Dynel = Dynel.s_DynelList.GetObject(i);
+			EnteredVicinity(dynel.GetID());
+		}
+		*/
 	}
 
 	public function Disconnect()
@@ -103,6 +108,7 @@ class com.fox.odmap.Tracker
 		Nametags.SignalNametagAdded.Disconnect(AddToQueue, this);
 		Nametags.SignalNametagUpdated.Disconnect(AddToQueue, this);
 		Nametags.SignalNametagRemoved.Disconnect(ClearMarker, this);
+		//VicinitySystem.SignalDynelEnterVicinity.Disconnect(EnteredVicinity, this);
 		loadListener = undefined;
 	}
 
@@ -112,6 +118,8 @@ class com.fox.odmap.Tracker
 		{
 			var content:XMLNode = XMLFile.firstChild;
 			var scaleMulti = Number(content.attributes.scale) || 1;
+			minX =  Number(content.attributes.minX) || 160;
+			maxX = Number(content.attributes.maxX) || 348;
 			for (var i = 0; i < content.childNodes.length; i++ )
 			{
 				var filterNode:XMLNode = content.childNodes[i];
@@ -225,7 +233,78 @@ class com.fox.odmap.Tracker
 			}
 		}
 	}
-
+	
+	
+	/*
+	//This succesfully finds the portal locations,but i found absolutely no way to tell whether they are activated,or when they activate
+	private function EnteredVicinity(id:ID32)
+	{
+		if (id.IsSimpleDynel()){
+			var keys:Array = [112, 12, 23, 1050];
+			var dyn:Character = Dynel.GetDynel(id);
+			if (dyn.GetStat(112, 2) == 8767301){
+				var comp:Vector3 = new Vector3(255, 0, 255);
+				var stats:Object = new Object();
+				for (var i in keys)
+				{
+					stats[keys[i]] = dyn.GetStat(keys[i]);
+					UtilsBase.PrintChatText("comp " + keys[i] + " = " + stats[keys[i]]);
+				}
+				VicinitySystem.SignalDynelEnterVicinity.Disconnect(EnteredVicinity, this);
+				for (var i = -20; i < 20; i++){
+					dyn = Dynel.GetDynel(new ID32(51320, id.GetInstance() - i));
+					if (dyn.GetStat(112, 2) == 8767301){
+						var distanceVector:Vector3 = Vector3.Sub(dyn.GetPosition(), comp);
+						var distance = distanceVector.x + distanceVector.z;
+						if (Math.abs(distance) > 10){
+							AddMarker(dyn, trackerConfig[trackerConfig.length - 1]);
+							dyn["_AddEffectPackage"] = dyn.AddEffectPackage;
+							dyn.AddEffectPackage = function()
+							{
+								UtilsBase.PrintChatText(dyn.GetID().toString() +" called effect " + arguments+ " " +  dyn["_AddEffectPackage"]);
+								return dyn["_AddEffectPackage"](arguments);
+							}
+							dyn.AddEffectPackage("test ");
+							
+							dyn["_AddLooksPackage"] = dyn.AddLooksPackage;
+							dyn.AddLooksPackage = function()
+							{
+								UtilsBase.PrintChatText(dyn.GetID().toString() +" called lookspackage " + arguments+ " " +  dyn["_AddLooksPackage"]);
+								return dyn["_AddLooksPackage"](arguments);
+							}
+							dyn.AddLooksPackage(0);
+							for (var y in keys){
+								if (stats[keys[y]] != dyn.GetStat(keys[y],2)) UtilsBase.PrintChatText(dyn.GetID() + " key " + keys[y] + " differs " + stats[keys[y]] + " vs " + dyn.GetStat(keys[y],2));
+							}
+							dyn.SignalBuffAdded.Connect(Delegate.create(this, function(){
+								UtilsBase.PrintChatText(dyn.GetID().toString() +" added buff " + arguments);
+							}));
+								dyn.SignalInvisibleBuffAdded.Connect(Delegate.create(this, function(){
+								UtilsBase.PrintChatText(dyn.GetID().toString() +" added invisible buff " + arguments);
+							}));
+								dyn.SignalInvisibleBuffUpdated.Connect(Delegate.create(this, function(){
+								UtilsBase.PrintChatText(dyn.GetID().toString() +" uppdated invisible buff " + arguments);
+							}));
+							dyn.SignalInvisibleBuffUpdated.Connect(Delegate.create(this, function(){
+								UtilsBase.PrintChatText(dyn.GetID().toString() +" updated buff " + arguments);
+							}));
+							dyn.SignalStatChanged.Connect(Delegate.create(this, function(){
+								UtilsBase.PrintChatText(dyn.GetID().toString() +" changed stat " + arguments);
+							}));
+							dyn.SignalStateUpdated.Connect(Delegate.create(this, function(){
+								UtilsBase.PrintChatText(dyn.GetID().toString() +" changed state " + arguments);
+							}));
+							dyn.SignalBuffRemoved.Connect(Delegate.create(this, function(){
+								UtilsBase.PrintChatText(dyn.GetID().toString() +" removed buff " + arguments);
+							}));
+						}
+					}
+				}
+			}
+		}
+	}
+	*/
+	
 	private function AddEnemyTag(char:Character)
 	{
 		var name:String = char.GetName();
