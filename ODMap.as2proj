@@ -54,6 +54,7 @@
     <asset path="src\assets\player4.png" bitmap="False" />
     <asset path="src\assets\player5.png" bitmap="False" />
     <asset path="src\assets\map_org.png" bitmap="False" />
+    <asset path="src\assets\map_alt.png" bitmap="False" />
   </library>
   <!-- Paths to exclude from the Project Explorer tree -->
   <hiddenPaths>

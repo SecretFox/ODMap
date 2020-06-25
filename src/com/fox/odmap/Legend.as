@@ -5,6 +5,7 @@ import com.Utils.ID32;
 import com.fox.odmap.LegendEntry;
 import com.fox.odmap.MarkerConfigLegend;
 import com.fox.odmap.MarkerObject;
+import com.fox.odmap.Mod;
 import com.fox.odmap.Tracker;
 import mx.utils.Delegate;
 /**
@@ -61,26 +62,33 @@ class com.fox.odmap.Legend
 	{
 		return name.split(" ").slice(2).join(" ");
 	}
+	
+	public function HasLegend(id:ID32)
+	{
+		for (var i in Entries)
+		{
+			if (LegendEntry(Entries[i]).ID.Equal(id)) return true;
+		}
+		return false;
+	}
 
-	public function AddEntry(marker:MarkerObject, id:ID32, time:Number, config:MarkerConfigLegend, expire:Boolean )
+	public function AddEntry(marker:MarkerObject, id:ID32, Time:Number, config:MarkerConfigLegend)
 	{
 		for (var i in Entries)
 		{
 			var Entry:LegendEntry = Entries[i];
-			if (Entry.ID.toString() == id.toString())
+			if (Entry.ID.Equal(id))
 			{
 				Entry.Config = config;
-				Entry.Time = time;
-				Entry.ExpireTime = expire;
+				Entry.Time = Time;
 				return;
 			}
 		}
 
 		var Entry:LegendEntry = new LegendEntry();
 		Entry.ID = id;
-		Entry.Time = time;
+		Entry.Time = Time;
 		Entry.Config = config;
-		Entry.ExpireTime = expire;
 
 		Entry.TextRoot = LegendContent.createEmptyMovieClip(id.toString(), LegendContent.getNextHighestDepth());
 		Entry.TextRoot._x = 5;
@@ -123,18 +131,10 @@ class com.fox.odmap.Legend
 		var f2 = function()
 		{
 			marker.containerClip.arrow.removeMovieClip();
-			/*
-			clearInterval(Entry.TextRoot.interval);
-			Colors.ApplyColor(marker.imgClip, marker.currentColor);
-			Entry.TextRoot.currentColor =  marker.currentColor;
-			*/
 			CharacterBase.SignalCharacterEnteredReticuleMode.Disconnect(this.onRollOut, this);
 		}
 		Entry.TextRoot.onRollOver = f;
 		Entry.TextRoot.onRollOut = f2;
-		
-		
-		//CharacterBase.SignalCharacterEnteredReticuleMode.Connect(Close, this);
 		
 		
 		Entry.LeftText = Entry.TextRoot.createTextField("Left", Entry.TextRoot.getNextHighestDepth(), 0, 0, 0, 24);
@@ -200,16 +200,15 @@ class com.fox.odmap.Legend
 		UpdateWidth();
 	}
 
-	public function RemoveEntry(id:ID32, force:Boolean)
+	public function RemoveEntry(id:ID32, force:Boolean,keepLegend:Boolean)
 	{
-		// Remove Entry
 		var found;
 		for (var i in Entries)
 		{
 			var Entry:LegendEntry = Entries[i];
-			if (Entry.ID.toString() == id.toString() && (!Entry.Config.force || force))
+			if (Entry.ID.Equal(id) && (!Entry.Config.force || force))
 			{
-				//Mod.ClearCachedLegend(id);
+				if(!keepLegend) Mod.ClearCachedLegend(id);
 				Entry.TextRoot.removeMovieClip();
 				Entries.splice(Number(i), 1);
 				found = true;
@@ -243,15 +242,7 @@ class com.fox.odmap.Legend
 			}
 			if (Entry.Config.direction == "down")
 			{
-				var timeLeft;
-				if (!Entry.ExpireTime)
-				{
-					timeLeft = Entry.Config.duration * 1000 + GameTime - Entry.Time;
-				}
-				else
-				{
-					timeLeft = Entry.Config.duration * 1000 + Entry.Time - GameTime;
-				}
+				var timeLeft = Entry.Config.duration * 1000 - (GameTime - Entry.Time);
 				if (timeLeft < 0)
 				{
 					Entry.Config.force = false;
@@ -263,18 +254,11 @@ class com.fox.odmap.Legend
 				for (var y in _root.nametagcontroller.m_NametagArray)
 				{
 					var m_Nametag/*:Nametag*/ = _root.nametagcontroller.m_NametagArray[y];
-					if (m_Nametag["m_Character"].GetID().toString() == Entry.ID.toString())
+					if (m_Nametag["m_Character"].GetID().Equal(Entry.ID))
 					{
 						m_Nametag["m_Name"].text = m_Nametag["m_Character"].GetName() + " " + Entry.RightText.text;
 					}
 				}
-				/* NOT RELIABLE FOR SOME REASON
-				var idx = _root.nametagcontroller.GetNametagIndex(Entry.ID);
-				if (idx)
-				{
-					_root.nametagcontroller.m_NametagArray[idx].m_Name.text = Entry.TextRoot[LegendEntry.LeftText].text + " " + Entry.TextRoot[LegendEntry.RightText].text;
-				}
-				*/
 			}
 			else if (Entry.Config.direction == "up")
 			{
@@ -290,7 +274,7 @@ class com.fox.odmap.Legend
 				for (var y in _root.nametagcontroller.m_NametagArray)
 				{
 					var m_Nametag/*:Nametag*/ = _root.nametagcontroller.m_NametagArray[y];
-					if (m_Nametag["m_Character"].GetID().toString() == Entry.ID.toString())
+					if (m_Nametag["m_Character"].GetID().Equal(Entry.ID))
 					{
 						m_Nametag["m_Name"].text = m_Nametag["m_Character"].GetName() + " " + Entry.RightText.text;
 					}

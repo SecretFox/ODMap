@@ -12,6 +12,7 @@ import com.fox.odmap.Legend;
 import com.fox.odmap.MarkerConfig;
 import com.fox.odmap.MarkerConfigLegend;
 import com.fox.odmap.MarkerObject;
+import com.fox.odmap.Mod;
 import mx.utils.Delegate;
 /*
 * ...
@@ -88,27 +89,32 @@ class com.fox.odmap.Tracker
 			var teamMember = team.m_TeamMembers[i];
 			AddToQueue(teamMember["m_CharacterId"]);
 		}
+		var legends:Array = Mod.GetCachedLegends();
+		for (var i in legends)
+		{
+			var stringID:String = legends[i].split(",")[0];
+			var splitID:Array = stringID.split(":");
+			AddToQueue(
+				new ID32
+				(
+					Number(splitID[0]), Number(splitID[1])
+				)
+			);
+		}
 		Nametags.SignalNametagAdded.Connect(AddToQueue, this);
 		Nametags.SignalNametagUpdated.Connect(AddToQueue, this);
 		Nametags.SignalNametagRemoved.Connect(ClearMarker, this);
 		Nametags.RefreshNametags();
-		/*VicinitySystem.SignalDynelEnterVicinity.Connect(EnteredVicinity, this);
-		for (var i = 0; i < Dynel.s_DynelList.GetLength(); i++){
-			var dynel:Dynel = Dynel.s_DynelList.GetObject(i);
-			EnteredVicinity(dynel.GetID());
-		}
-		*/
 	}
 
-	public function Disconnect()
+	public function Disconnect(keepLegends)
 	{
-		ClearMarkers();
+		ClearMarkers(keepLegends);
 		m_Legend.Stop();
 		m_Legend = undefined;
 		Nametags.SignalNametagAdded.Disconnect(AddToQueue, this);
 		Nametags.SignalNametagUpdated.Disconnect(AddToQueue, this);
 		Nametags.SignalNametagRemoved.Disconnect(ClearMarker, this);
-		//VicinitySystem.SignalDynelEnterVicinity.Disconnect(EnteredVicinity, this);
 		loadListener = undefined;
 	}
 
@@ -144,7 +150,7 @@ class com.fox.odmap.Tracker
 					config.legend = legend;
 				}
 				config.identifier = filterNode.attributes.name+i;
-				config.namefilter = filterNode.attributes.namefilter.split(",");
+				config.namefilter = filterNode.attributes.namefilter.toLowerCase().split(",");
 				config.bufffilter = filterNode.attributes.bufffilter.split(",");
 				config.iimg = filterNode.attributes.iimg;
 				config.eimg = filterNode.attributes.eimg;
@@ -206,7 +212,7 @@ class com.fox.odmap.Tracker
 		for (var i in markerArray)
 		{
 			var marker:MarkerObject = markerArray[i];
-			if (marker.char.GetID().toString() == id.toString())
+			if (marker.char.GetID().Equal(id))
 			{
 				return true;
 			}
@@ -218,7 +224,7 @@ class com.fox.odmap.Tracker
 		while (checkQueue.length>0)
 		{
 			var id:ID32 = ID32(checkQueue.pop());
-			if (!AlreadyTracking(id))
+			if (!id.IsSimpleDynel() && !AlreadyTracking(id))
 			{
 				var char:Character = Character.GetCharacter(id);
 				if (id.IsPlayer())
@@ -233,108 +239,34 @@ class com.fox.odmap.Tracker
 			}
 		}
 	}
-	
-	
-	/*
-	//This succesfully finds the portal locations,but i found absolutely no way to tell whether they are activated,or when they activate
-	private function EnteredVicinity(id:ID32)
-	{
-		if (id.IsSimpleDynel()){
-			var keys:Array = [112, 12, 23, 1050];
-			var dyn:Character = Dynel.GetDynel(id);
-			if (dyn.GetStat(112, 2) == 8767301){
-				var comp:Vector3 = new Vector3(255, 0, 255);
-				var stats:Object = new Object();
-				for (var i in keys)
-				{
-					stats[keys[i]] = dyn.GetStat(keys[i]);
-					UtilsBase.PrintChatText("comp " + keys[i] + " = " + stats[keys[i]]);
-				}
-				VicinitySystem.SignalDynelEnterVicinity.Disconnect(EnteredVicinity, this);
-				for (var i = -20; i < 20; i++){
-					dyn = Dynel.GetDynel(new ID32(51320, id.GetInstance() - i));
-					if (dyn.GetStat(112, 2) == 8767301){
-						var distanceVector:Vector3 = Vector3.Sub(dyn.GetPosition(), comp);
-						var distance = distanceVector.x + distanceVector.z;
-						if (Math.abs(distance) > 10){
-							AddMarker(dyn, trackerConfig[trackerConfig.length - 1]);
-							dyn["_AddEffectPackage"] = dyn.AddEffectPackage;
-							dyn.AddEffectPackage = function()
-							{
-								UtilsBase.PrintChatText(dyn.GetID().toString() +" called effect " + arguments+ " " +  dyn["_AddEffectPackage"]);
-								return dyn["_AddEffectPackage"](arguments);
-							}
-							dyn.AddEffectPackage("test ");
-							
-							dyn["_AddLooksPackage"] = dyn.AddLooksPackage;
-							dyn.AddLooksPackage = function()
-							{
-								UtilsBase.PrintChatText(dyn.GetID().toString() +" called lookspackage " + arguments+ " " +  dyn["_AddLooksPackage"]);
-								return dyn["_AddLooksPackage"](arguments);
-							}
-							dyn.AddLooksPackage(0);
-							for (var y in keys){
-								if (stats[keys[y]] != dyn.GetStat(keys[y],2)) UtilsBase.PrintChatText(dyn.GetID() + " key " + keys[y] + " differs " + stats[keys[y]] + " vs " + dyn.GetStat(keys[y],2));
-							}
-							dyn.SignalBuffAdded.Connect(Delegate.create(this, function(){
-								UtilsBase.PrintChatText(dyn.GetID().toString() +" added buff " + arguments);
-							}));
-								dyn.SignalInvisibleBuffAdded.Connect(Delegate.create(this, function(){
-								UtilsBase.PrintChatText(dyn.GetID().toString() +" added invisible buff " + arguments);
-							}));
-								dyn.SignalInvisibleBuffUpdated.Connect(Delegate.create(this, function(){
-								UtilsBase.PrintChatText(dyn.GetID().toString() +" uppdated invisible buff " + arguments);
-							}));
-							dyn.SignalInvisibleBuffUpdated.Connect(Delegate.create(this, function(){
-								UtilsBase.PrintChatText(dyn.GetID().toString() +" updated buff " + arguments);
-							}));
-							dyn.SignalStatChanged.Connect(Delegate.create(this, function(){
-								UtilsBase.PrintChatText(dyn.GetID().toString() +" changed stat " + arguments);
-							}));
-							dyn.SignalStateUpdated.Connect(Delegate.create(this, function(){
-								UtilsBase.PrintChatText(dyn.GetID().toString() +" changed state " + arguments);
-							}));
-							dyn.SignalBuffRemoved.Connect(Delegate.create(this, function(){
-								UtilsBase.PrintChatText(dyn.GetID().toString() +" removed buff " + arguments);
-							}));
-						}
-					}
-				}
-			}
-		}
-	}
-	*/
-	
+
 	private function AddEnemyTag(char:Character)
 	{
-		var name:String = char.GetName();
-		if (name != "GHOST") // Invisible being inside the hag stone
+		var name:String = char.GetName().toLowerCase();
+		for (var i = 2; i < trackerConfig.length; i++)
 		{
-			for (var i = 2; i < trackerConfig.length; i++)
+			var config:MarkerConfig = trackerConfig[i];
+			if (!config.namefilter && !config.bufffilter)
 			{
-				var config:MarkerConfig = trackerConfig[i];
-				if (!config.namefilter && !config.bufffilter)
+				AddMarker(char, trackerConfig[i]);
+				return;
+			}
+			else
+			{
+				for (var x in config.namefilter)
 				{
-					AddMarker(char, trackerConfig[i]);
-					return;
-				}
-				else
-				{
-					for (var x in config.namefilter)
+					if (name.indexOf(config.namefilter[x]) >= 0)
 					{
-						if (name.indexOf(config.namefilter[x]) >= 0)
-						{
-							AddMarker(char, config);
-							return;
-						}
+						AddMarker(char, config);
+						return;
 					}
-					for (var x in config.bufffilter)
+				}
+				for (var x in config.bufffilter)
+				{
+					if (char.m_BuffList[config.bufffilter[x]] || char.m_InvisibleBuffList[config.bufffilter[x]])
 					{
-						if (char.m_BuffList[config.bufffilter[x]] || char.m_InvisibleBuffList[config.bufffilter[x]])
-						{
-							AddMarker(char, config);
-							return;
-						}
+						AddMarker(char, config);
+						return;
 					}
 				}
 			}
@@ -386,7 +318,7 @@ class com.fox.odmap.Tracker
 			marker.imgClip._y = -marker.imgClip._height / 2;
 		}
 		if (config.color1) CreateColor(marker, config);
-		if (config.legend) CreateLegend(marker, config, m_Legend);
+		if (config.legend) CreateLegend(marker, config, m_Legend,char);
 		clearInterval(updateInterval);
 		updateInterval = setInterval(Delegate.create(this, MoveMarkers), 50);
 		MoveMarkers();
@@ -423,8 +355,13 @@ class com.fox.odmap.Tracker
 		}
 	}
 
-	static function CreateLegend(marker:MarkerObject, config:MarkerConfig, m_Legend:Legend)
+	static function CreateLegend(marker:MarkerObject, config:MarkerConfig, m_Legend:Legend, char:Character)
 	{
+		var Time2:Number = Mod.GetCachedLegend(char.GetID());
+		if (Time2)
+		{
+			m_Legend.AddEntry(marker, char.GetID(), Time2, config.legend);
+		}
 		// Buff added
 		if (config.legend.type == "abuff")
 		{
@@ -432,38 +369,23 @@ class com.fox.odmap.Tracker
 			{
 				if (string(buffID) == config.legend.id)
 				{
-					var GameTime:Number = com.GameInterface.UtilsBase.GetNormalTime() * 1000;
-					var time;
-					var ExpireTime;
-					if (marker.char.m_InvisibleBuffList[buffID])
-					{
-						time = marker.char.m_InvisibleBuffList[buffID].m_TotalTime;
-					}
-					else if (marker.char.m_BuffList[buffID])
-					{
-						time = marker.char.m_BuffList[buffID].m_TotalTime;
-					}
-					if (time <= GameTime)
-					{
-						ExpireTime = true;
-					}
-					m_Legend.AddEntry(marker, marker.char.GetID(), time, config.legend, ExpireTime);
-					//Mod.CacheLegend(marker.char.GetID(), time);
+					var Time:Number = com.GameInterface.UtilsBase.GetNormalTime() * 1000;
+					if (config.legend.direction == "up" && config.legend.duration) Time += config.legend.duration * 1000;
+					m_Legend.AddEntry(marker, char.GetID(), Time, config.legend);
+					Mod.CacheLegend(char.GetID(), Time);
 				}
 			}
-
-			marker.char.SignalBuffAdded.Connect(marker.m_Signals, f);
-			marker.char.SignalInvisibleBuffAdded.Connect(marker.m_Signals, f);
-			if (marker.char.m_BuffList[config.legend.id])
+			char.SignalBuffAdded.Connect(marker.m_Signals, f);
+			char.SignalInvisibleBuffAdded.Connect(marker.m_Signals, f);
+			if (!m_Legend.HasLegend(char.GetID()))
 			{
-				f(config.legend.id);
-			}
-			if (marker.char.m_InvisibleBuffList[config.legend.id])
-			{
-				f(config.legend.id);
+				if (char.m_BuffList[config.legend.id] || char.m_InvisibleBuffList[config.legend.id])
+				{
+					f(config.legend.id);
+					
+				}
 			}
 		}
-
 		// Buff removed
 		if (config.legend.type == "rbuff")
 		{
@@ -471,17 +393,18 @@ class com.fox.odmap.Tracker
 			{
 				if (string(buffID) == config.legend.id)
 				{
-					var time:Number = com.GameInterface.UtilsBase.GetNormalTime()*1000;
-					m_Legend.AddEntry(marker, marker.char.GetID(), time, config.legend);
-					//Mod.CacheLegend(marker.char.GetID(), time);
+					var Time:Number = com.GameInterface.UtilsBase.GetNormalTime() * 1000;
+					if (config.legend.direction == "up" && config.legend.duration) Time += config.legend.duration * 1000;
+					m_Legend.AddEntry(marker, char.GetID(), Time, config.legend);
+					Mod.CacheLegend(char.GetID(), Time);
 				}
 			}
-			marker.char.SignalBuffRemoved.Connect(marker.m_Signals);
+			char.SignalBuffRemoved.Connect(marker.m_Signals);
 		}
 
 		//Finished Cast
 		if (config.legend.type == "fcast" ||
-				config.legend.type == "scast")
+			config.legend.type == "scast")
 		{
 			var f = function()
 			{
@@ -490,68 +413,32 @@ class com.fox.odmap.Tracker
 				{
 					if (config.legend.type == "scast")
 					{
-						var time:Number = com.GameInterface.UtilsBase.GetNormalTime() * 1000;
-						m_Legend.AddEntry(marker, marker.char.GetID(), time, config.legend);
-						//Mod.CacheLegend(marker.char.GetID(), time);
+						var Time:Number = com.GameInterface.UtilsBase.GetNormalTime() * 1000;
+						if (config.legend.direction == "up" && config.legend.duration) Time += config.legend.duration * 1000;
+						m_Legend.AddEntry(marker, char.GetID(), Time, config.legend);
+						Mod.CacheLegend(char.GetID(), Time);
 					}
 				}
 			}
-
 			var f2 = function ()
 			{
 				marker.currentCast = undefined;
 			}
-
 			var f3 = function ()
 			{
 				if (marker.currentCast == config.legend.id && config.legend.type == "fcast")
 				{
-					var time:Number = com.GameInterface.UtilsBase.GetNormalTime() * 1000;
-					m_Legend.AddEntry(marker, marker.char.GetID(), time, config.legend);
-					//Mod.CacheLegend(marker.char.GetID(), time);
+					var Time:Number = com.GameInterface.UtilsBase.GetNormalTime() * 1000;
+					if (config.legend.direction == "up" && config.legend.duration) Time += config.legend.duration * 1000;
+					m_Legend.AddEntry(marker, char.GetID(), Time, config.legend);
+					Mod.CacheLegend(char.GetID(), Time);
 				}
 				marker.currentCast = undefined;
-
 			}
-			marker.char.SignalCommandStarted.Connect(marker.m_Signals, f);
-			marker.char.SignalCommandAborted.Connect(marker.m_Signals, f2);
-			marker.char.SignalCommandEnded.Connect(marker.m_Signals, f3);
-
-			/*
-			var newchar:Character = Character.GetCharacter(marker.char.GetID());
-			newchar.SignalBuffAdded.Connect(function(){
-				UtilsBase.PrintChatText(newchar.GetName() +" added " + arguments);
-				for (var i in newchar.m_BuffList){
-					UtilsBase.PrintChatText("-" + i);
-					for (var y in newchar.m_BuffList[i]){
-						UtilsBase.PrintChatText("--" + y+" " + newchar.m_BuffList[i][y]);
-					}
-				}
-			});
-			newchar.SignalBuffRemoved.Connect(function(){
-				UtilsBase.PrintChatText(newchar.GetName() +" removed " + arguments);
-			});
-			newchar.SignalInvisibleBuffAdded.Connect(function(){
-				UtilsBase.PrintChatText(newchar.GetName() +" added invisible " + arguments);
-				for (var i in newchar.m_InvisibleBuffList){
-					UtilsBase.PrintChatText("-" + i);
-					for (var y in newchar.m_InvisibleBuffList[i]){
-						UtilsBase.PrintChatText("--" + y+" " + newchar.m_InvisibleBuffList[i][y]);
-					}
-				}
-			});
-			newchar.SignalBuffAdded.Emit();
-			newchar.SignalInvisibleBuffAdded.Emit();
-			newchar.SignalBuffRemoved.Emit();
-			*/
+			char.SignalCommandStarted.Connect(marker.m_Signals, f);
+			char.SignalCommandAborted.Connect(marker.m_Signals, f2);
+			char.SignalCommandEnded.Connect(marker.m_Signals, f3);
 		}
-		/*
-		var time:Number = Mod.GetCachedLegend(marker.char.GetID());
-		if (time)
-		{
-			m_Legend.AddEntry(marker, marker.char.GetID(), time, config.legend);
-		}
-		*/
 	}
 
 	public function MoveMarkers()
@@ -584,12 +471,11 @@ class com.fox.odmap.Tracker
 		for (var i in markerArray)
 		{
 			var marker:MarkerObject = markerArray[i];
-			if (marker.char.GetID().toString() == id.toString())
+			if (marker.char.GetID().Equal(id))
 			{
 				marker.m_Signals.DisconnectAll();
 				marker.containerClip.removeMovieClip();
 				m_Legend.RemoveEntry(marker.char.GetID());
-
 				markerArray.splice(Number(i), 1);
 				if (markerArray.length == 0)
 				{
@@ -600,7 +486,7 @@ class com.fox.odmap.Tracker
 		}
 	}
 
-	public function ClearMarkers()
+	private function ClearMarkers(keepLegend:Boolean)
 	{
 		clearInterval(updateInterval);
 		clearTimeout(checkTimeout);
@@ -608,7 +494,7 @@ class com.fox.odmap.Tracker
 		{
 			var marker:MarkerObject = markerArray[i];
 			marker.m_Signals.DisconnectAll();
-			m_Legend.RemoveEntry(marker.char.GetID());
+			m_Legend.RemoveEntry(marker.char.GetID(), undefined, keepLegend);
 			marker.containerClip.removeMovieClip()
 		}
 		markerArray = new Array();

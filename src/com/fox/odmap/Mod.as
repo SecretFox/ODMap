@@ -6,6 +6,7 @@ import com.GameInterface.Game.Character;
 import com.GameInterface.WaypointInterface;
 import com.Utils.Archive;
 import com.Utils.GlobalSignal;
+import com.Utils.ID32;
 import com.fox.Utils.Common;
 import com.fox.odmap.Map;
 import com.fox.odmap.Tracker;
@@ -17,11 +18,11 @@ import mx.utils.Delegate;
 */
 class com.fox.odmap.Mod
 {
+	static var config:Archive;
 	private var m_swfRoot:MovieClip;
 	private var Container:MovieClip;
 	private var m_Map:Map;
 	private var m_Tracker:Tracker;
-	private var config:Archive;
 	private var DvalHideMinimap:DistributedValue;
 	private var DvalReloadConfig:DistributedValue;
 	private var mouseListener:Object;
@@ -73,7 +74,7 @@ class com.fox.odmap.Mod
 
 	public function Deactivate():Archive
 	{
-		return config
+		return config;
 	}
 	
 	private function ReloadConfig(dv:DistributedValue)
@@ -82,13 +83,13 @@ class com.fox.odmap.Mod
 		{
 			if (Container)
 			{
-				removeMap();
+				removeMap(true);
 				AttachMap();
 			}
 			dv.SetValue(false);
 		}
 	}
-	/*
+
 	static function GetCachedLegend(id:ID32)
 	{
 		var entries:Array = config.FindEntryArray("legend");
@@ -97,7 +98,12 @@ class com.fox.odmap.Mod
 			if (data[0] == id.toString()) return data[1];
 		}
 	}
-
+	
+	static function GetCachedLegends()
+	{
+		return config.FindEntryArray("legend");
+	}
+	
 	static function CacheLegend(id:ID32, time:Number)
 	{
 		var entries:Array = config.FindEntryArray("legend");
@@ -139,7 +145,7 @@ class com.fox.odmap.Mod
 		var mod:GUIModuleIF = GUIModuleIF.FindModuleIF("ODMap");
 		mod.StoreConfig(config);
 	}
-	*/
+
 	public function SettingsChanged(dv:DistributedValue)
 	{
 		config.ReplaceEntry("hide", dv.GetValue());
@@ -172,15 +178,14 @@ class com.fox.odmap.Mod
 			if (Container)
 			{
 				removeMap();
-				//ClearAllCachedLegends();
+				ClearAllCachedLegends();
 			}
 		}
 	}
 
-	public function removeMap()
+	public function removeMap(keepLegend)
 	{
-		m_Tracker.Disconnect();
-		m_Tracker.ClearMarkers();
+		m_Tracker.Disconnect(keepLegend);
 		m_Tracker = undefined;
 		Container.removeMovieClip();
 		Container = undefined;

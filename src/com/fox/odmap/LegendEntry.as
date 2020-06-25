@@ -12,6 +12,5 @@ class com.fox.odmap.LegendEntry
 	public var ID:ID32;
 	public var TextRoot:MovieClip;
 	public var Time:Number;
-	public var ExpireTime:Boolean;
 	public var Config:MarkerConfigLegend;
 }

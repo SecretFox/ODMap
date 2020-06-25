@@ -1,87 +1,91 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<!-- 
-	Keep depths above 0, highest dpth value = topmost 
-	iimg, eimg = internal image or external image path,
-		iimg = "src.assets.enemy.png" 
-		eimg = "ODMap/assets/enemy.png" or "rdb:1000624:6698994"
-	color1 is image tint when enemy is not targeting player character
-	color2 is image tint when enemy IS targeting player character
-	legend x,x,x,x,x,x
-		buffID or cast name,
-		type,
-			abuff = buff added
-			rbuff = buff removed
-			fcast = finished cast
-			scast = started cast
-		duration, time to count down/ up to from, legend will be removed after this time amount
-		direction, dount down or up
-		force, whether the legend should be kept even if the target nametag disappears(target can still be alive)
-		test function, function that checks if marker should be deleted(leave empty)
-	keep determines if the image should be removed when the mob dies
-	namefilter is comma separated list of (partial) strings that get checked against mob name
-	bufffilter is comma separated list of buffID's that get checked against targets buffs
-
-	These may not be fully accurate / up-to-date:
-		name="Volatile" 	namefilter="B00" 
-		name="Commander" 	namefilter="C12" 
-		name="Zapper" 		namefilter="E11" 
-		name="Titan" 		namefilter="G55" 
-		name="Titan spawn" 	namefilter="G56" 
-		name="Hunter" 		namefilter="H49" 
-		name="Flamecaller" 	namefilter="M27" 
-		name="Swarm" 		namefilter="S88" 
-		name="Singularity" 	namefilter="W55" 
-
-		name="Inspiring" 	bufffilter="9265842,9265842"
-		name="Behemoth" 	bufffilter="9265632,9453666"
-		name="Acidic" 		bufffilter="9265635"
-		name="Infested" 	bufffilter="9265702"
-		name="Hellish" 		bufffilter="9265873"
-		name="Attractor" 	bufffilter="9265932"
-		name="Charged" 		bufffilter="9453669,9453683"
-		name="Avenger" 		bufffilter="9453672"
-		name="Immortal" 	bufffilter="9453684,9453685,9453686,9453695"
-		name="Pestilent" 	bufffilter="9458489"
-		name=Cursed"		bufffilter="9458487,9458485,94585469458545,9458544,9458488"
--->
 <!--
 	scale multiplies all scale values
 	iimg loads map from inside the .swf, valid values are "src.assets.map.png" and "src.assets.map_org.png"
 	eimg loads img from path inside the mod folder e.g ODMap/assets/map_org.png, you can edit these images as you wish
 	minX is the smallest x Coordinate visible on the map, for included map this is 160
 	minX is the farmost x Coordinate visible on the map, for included map this is 348
-	As it happens the map is perfectly centered square, so these double as minY and maxY values (non square maps are enot supported)
+	As it happens the map is perfectly centered square, so these double as minY and maxY values (rectangular/uncentered maps are not supported)
 -->
-<root scale="1.20" iimg="src.assets.map_org.png" minX="160" maxX="348">
+<root scale="1.20" iimg="src.assets.map_alt.png" minX="160" maxX="348">
+	<!-- 
+		Keep depths above 0, highest depth value = topmost 
+		iimg, eimg = internal image or external image path,
+			iimg = "src.assets.enemy.png" 
+			eimg = "ODMap/assets/enemy.png" or "rdb:1000624:6698994"
+		color1 is image tint when enemy is not targeting player character
+		color2 is image tint when enemy is targeting player character (this does not always mean mob is chasing player)
+		legend x,x,x,x,x,x
+			buffID or cast name,
+			type,
+				abuff = buff added
+				rbuff = buff removed
+				fcast = finished cast
+				scast = started cast
+			duration, legend will be removed after this time amount, if counting down it will also count down from this value
+			direction, dount "down" or "up"
+			force, whether the legend should be kept even if the target nametag disappears(target can still be alive)
+			function, function that checks if marker should be deleted (can be left empty), if duration is unspecified this takes care of removing the legend
+		keep determines if the image should be removed when the mob dies
+		namefilter is comma separated list of (partial) strings that get checked against mob name
+		bufffilter is comma separated list of buffID's that get checked against targets buffs
+
+		These may not be fully accurate / up-to-date:
+			name="Volatile" 	namefilter="B00" 
+			name="Commander" 	namefilter="C12" 
+			name="Zapper" 		namefilter="E11" 
+			name="Titan" 		namefilter="G55" 
+			name="Titan spawn" 	namefilter="G56" 
+			name="Hunter" 		namefilter="H49" 
+			name="Flamecaller" 	namefilter="M27" 
+			name="Swarm" 		namefilter="S88" 
+			name="Singularity" 	namefilter="W55" 
+
+			name="Inspiring" 	bufffilter="9265842,9265842"
+			name="Behemoth" 	bufffilter="9265632,9453666"
+			name="Acidic" 		bufffilter="9265635"
+			name="Infested" 	bufffilter="9265702"
+			name="Hellish" 		bufffilter="9265873"
+			name="Attractor" 	bufffilter="9265932"
+			name="Charged" 		bufffilter="9453669,9453683"
+			name="Avenger" 		bufffilter="9453672"
+			name="Immortal" 	bufffilter="9453684,9453685,9453686,9453695"
+			name="Pestilent" 	bufffilter="9458489"
+			name=Cursed"		bufffilter="9458487,9458485,94585469458545,9458544,9458488"
+	-->
+	
 	<!-- Client must be first-->
-	<layer name="Client" 		depth="19" keep="true" rotate="true" iimg="src.assets.player.png" scale="0.65"></layer>
+	<layer name="Client" 		depth="20" keep="true" rotate="true" iimg="src.assets.player.png" scale="0.65"></layer>
 	<!-- Players must be second-->
-	<layer name="Players" 		depth="19" keep="true" rotate="true" iimg="src.assets.player3.png" scale="0.65"></layer>
+	<layer name="Players" 		depth="19" keep="true" rotate="true" iimg="src.assets.player3.png" scale="0.55"></layer>
 	
 	<!-- Boss -->
-	<layer name="Boss" 			depth="24" namefilter="X44" color1="0xF89603" iimg="src.assets.boss.png" scale="0.8"></layer>
+	<layer name="Boss" 			depth="25" namefilter="X44" color1="0xF89603" iimg="src.assets.boss.png" scale="0.4"></layer>
 	
 	<!-- Commander, Titan -->
-	<layer name="Commander" 	depth="24" namefilter="C12,G55" color1="0xE10000" iimg="src.assets.boss.png"></layer>
+	<layer name="Commander" 	depth="25" namefilter="C12,G55" color1="0xE10000" iimg="src.assets.boss.png" scale="0.4"></layer>
 	
 	<!-- Singularities, not removed on "death" -->
-	<layer name="Singularity"	depth="23" namefilter="W55" keep="true" 	legend="9350410,abuff,450,down,false" color1="0xFFFFFF" iimg="src.assets.enemy.png"></layer>
+	<layer name="Singularity"	depth="24" namefilter="W55" keep="true" 	legend="9350410,abuff,450,down,false" color1="0xFFFFFF" iimg="src.assets.enemy.png"></layer>
 
 	<!-- Healers -->
-	<layer name="Healer"		depth="22" bufffilter="9265842,9265842" iimg="src.assets.healer.png" scale="0.7"></layer>
+	<layer name="Healer"		depth="23" bufffilter="9265842,9265842" iimg="src.assets.healer.png" scale="0.7"></layer>
 	
 	<!-- Flamecaller -->
-	<layer name="Special" 		depth="21" namefilter="M27" iimg="src.assets.flame.png" scale="0.7"></layer>
+	<layer name="Special" 		depth="22" namefilter="M27" iimg="src.assets.flame.png" scale="0.7"></layer>
 	
 	<!-- Hunter -->
-	<layer name="Special" 		depth="21" namefilter="H49" color1="0xBBBBBB" legend="Flicker,fcast,,up,true,com.fox.odmap.Legend.TestHunter" iimg="src.assets.boss.png" scale="0.8"></layer>
+	<layer name="Special" 		depth="22" namefilter="H49" color1="0xBBBBBB" legend="Flicker,fcast,,up,true,com.fox.odmap.Legend.TestHunter" iimg="src.assets.boss.png" scale="0.4"></layer>
 	
 	<!-- Zapper -->
-	<layer name="Special" 		depth="21" namefilter="E11" iimg="src.assets.c4.png" scale="0.75"></layer>
+	<layer name="Special" 		depth="22" namefilter="E11" iimg="src.assets.c4.png" scale="0.75"></layer>
 	
 	<!-- Titanspawn -->
-	<layer name="Special" 		depth="21" namefilter="G56" iimg="src.assets.boss.png" color1="0xE10000" scale="0.5"></layer>
+	<layer name="Special" 		depth="22" namefilter="G56" iimg="src.assets.boss.png" color1="0xE10000" scale="0.25"></layer>
+	
+	<!-- Volatile -->
+	<layer name="Normal" 		depth="22" namefilter="B00" color1="0xFFE94A" color2="0xC10000" iimg="src.assets.enemy.png" scale="0.9"></layer>
 	
 	<!-- Rest, catch all filter -->
-	<layer name="Normal" 		depth="20" color1="0xC10000" color2="0x01EB07" iimg="src.assets.enemy.png" scale="0.75"></layer>
+	<layer name="Normal" 		depth="21" color1="0xC10000" color2="0x01EB07" iimg="src.assets.enemy.png" scale="0.75"></layer>
 </root>
