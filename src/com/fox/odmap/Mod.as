@@ -3,6 +3,9 @@ import com.GameInterface.DistributedValue;
 import com.GameInterface.DistributedValueBase;
 import com.GameInterface.GUIModuleIF;
 import com.GameInterface.Game.Character;
+import com.GameInterface.Game.CharacterBase;
+import com.GameInterface.ScryWidgets;
+import com.GameInterface.UtilsBase;
 import com.GameInterface.WaypointInterface;
 import com.Utils.Archive;
 import com.Utils.GlobalSignal;
@@ -23,9 +26,7 @@ class com.fox.odmap.Mod
 	private var Container:MovieClip;
 	private var m_Map:Map;
 	private var m_Tracker:Tracker;
-	private var DvalHideMinimap:DistributedValue;
 	private var DvalReloadConfig:DistributedValue;
-	private var mouseListener:Object;
 	private var nametagsEnabled:DistributedValue;
 	private var loaded:Boolean;
 	static var inStoneHenge:Boolean;
@@ -33,10 +34,7 @@ class com.fox.odmap.Mod
 	public function Mod(root)
 	{
 		m_swfRoot = root;
-		mouseListener = new Object();
-		mouseListener.onMouseWheel = Delegate.create(this, onMouseWheel);
 		nametagsEnabled = DistributedValue.Create("ShowVicinityNPCNametags");
-		DvalHideMinimap = DistributedValue.Create("ODMap_HideMinimap");
 		DvalReloadConfig = DistributedValue.Create("ODMap_ReloadConfig");
 	}
 
@@ -48,7 +46,6 @@ class com.fox.odmap.Mod
 
 	public function Load()
 	{
-		DvalHideMinimap.SignalChanged.Connect(SettingsChanged, this);
 		WaypointInterface.SignalPlayfieldChanged.Connect(PlayfieldChanged, this);
 		GlobalSignal.SignalSetGUIEditMode.Connect(GuiEdit, this);
 		DvalReloadConfig.SignalChanged.Connect(ReloadConfig, this);
@@ -56,7 +53,6 @@ class com.fox.odmap.Mod
 
 	public function Unload()
 	{
-		DvalHideMinimap.SignalChanged.Disconnect(SettingsChanged, this);
 		WaypointInterface.SignalPlayfieldChanged.Disconnect(PlayfieldChanged, this);
 		GlobalSignal.SignalSetGUIEditMode.Disconnect(GuiEdit, this);
 		DvalReloadConfig.SignalChanged.Disconnect(ReloadConfig, this);
@@ -146,27 +142,20 @@ class com.fox.odmap.Mod
 		mod.StoreConfig(config);
 	}
 
-	public function SettingsChanged(dv:DistributedValue)
-	{
-		config.ReplaceEntry("hide", dv.GetValue());
-		if (dv.GetValue() && inStoneHenge) DistributedValueBase.SetDValue("hud_map_window", false);
-		else DistributedValueBase.SetDValue("hud_map_window", true);
-	}
-
 	public function PlayfieldChanged(zone)
 	{
 		if (IsStoneHenge(zone))
 		{
-			if (config.FindEntry("hide"))
+			if (DistributedValueBase.GetDValue("ODMap_HideMinimap"))
 			{
 				DistributedValueBase.SetDValue("hud_map_window", false);
 			}
-			SavePreferences();
+			SaveNametagPreferences();
 			if (!Container) AttachMap();
 		}
 		else
 		{
-			if (config.FindEntry("hide"))
+			if (DistributedValueBase.GetDValue("ODMap_HideMinimap"))
 			{
 				DistributedValueBase.SetDValue("hud_map_window", true);
 			}
@@ -185,6 +174,7 @@ class com.fox.odmap.Mod
 
 	public function removeMap(keepLegend)
 	{
+		GlobalSignal.SignalScryTimerLoaded.Disconnect(TweakTimer, this);
 		m_Tracker.Disconnect(keepLegend);
 		m_Tracker = undefined;
 		Container.removeMovieClip();
@@ -192,7 +182,7 @@ class com.fox.odmap.Mod
 		m_Map = undefined;
 	}
 
-	public function SavePreferences()
+	public function SaveNametagPreferences()
 	{
 		if (!nametagsEnabled.GetValue())
 		{
@@ -228,10 +218,6 @@ class com.fox.odmap.Mod
 
 	private function onMouseWheel(delta)
 	{
-		if (Mouse.getTopMostEntity() != Container.Image)
-		{
-			return
-		}
 		var oldSize = config.FindEntry("Size");
 		if (delta > 0)
 		{
@@ -268,15 +254,30 @@ class com.fox.odmap.Mod
 	private function AttachMap(temp)
 	{
 		Container = m_swfRoot.createEmptyMovieClip("MapContainer", m_swfRoot.getNextHighestDepth());
-		var callback;
-		if (inStoneHenge) callback = Delegate.create(this, MapLoaded);
+		var callback
+		if (!temp) callback =  Delegate.create(this, MapLoaded);
+		else callback =  Delegate.create(this, TempMapLoaded);
 		m_Map = new Map(Container, getMapPos(), getMapSize(), callback);
-		if (inStoneHenge) GuiEdit(false);
 	}
 
 	private function MapLoaded()
 	{
 		AttachTracker();
+		SetMapAction(false);
+		if (DistributedValueBase.GetDValue("ODMap_TweakTimer")){
+			GlobalSignal.SignalScryTimerLoaded.Connect(TweakTimer, this);
+		}
+	}
+	
+	private function TempMapLoaded()
+	{
+		SetMapAction(true);
+	}
+	
+	private function TweakTimer()
+	{
+		_root.scrytimer.m_PanelBackground._alpha = 0;
+		GlobalSignal.SignalScryTimerLoaded.Disconnect(TweakTimer, this);
 	}
 
 	private function StartDrag()
@@ -291,27 +292,37 @@ class com.fox.odmap.Mod
 		m_Tracker.Show();
 		ChangePos();
 	}
+	
+	private function SetMapAction(state)
+	{
+		if (state)
+		{
+			Container.Image.onPress = Delegate.create(this, StartDrag);
+			Container.Image.onRelease = Container.Image.onReleaseOutside = Delegate.create(this, StopDrag);
+			Container.Image.onMouseWheel = Delegate.create(this, onMouseWheel);
+		}
+		else
+		{
+			Container.Image.onPress = Container.Image.onRelease = Container.Image.onReleaseOutside = Container.Image.onMouseWheel = undefined;
+		}
+	}
 
 	private function GuiEdit(state)
 	{
+		SetMapAction(state);
 		if (state)
 		{
 			if (!inStoneHenge)
 			{
 				if (!Container) AttachMap(true);
 			}
-			Container.Image.onPress = Delegate.create(this, StartDrag);
-			Container.Image.onRelease = Container.Image.onReleaseOutside = Delegate.create(this, StopDrag);
-			Mouse.addListener(mouseListener);
 		}
 		else
 		{
-			Container.Image.onPress = Container.Image.onRelease = Container.Image.onReleaseOutside = undefined;
 			if (!inStoneHenge)
 			{
 				removeMap();
 			}
-			Mouse.removeListener(mouseListener);
 		}
 	}
 

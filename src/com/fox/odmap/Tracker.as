@@ -224,9 +224,9 @@ class com.fox.odmap.Tracker
 		while (checkQueue.length>0)
 		{
 			var id:ID32 = ID32(checkQueue.pop());
-			if (!id.IsSimpleDynel() && !AlreadyTracking(id))
+			var char:Character = Character.GetCharacter(id);
+			if (!id.IsSimpleDynel() && !AlreadyTracking(id) && !char.IsPet())
 			{
-				var char:Character = Character.GetCharacter(id);
 				if (id.IsPlayer())
 				{
 					if char.IsClientChar() AddMarker(char, trackerConfig[0]);

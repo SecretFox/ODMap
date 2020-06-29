@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?> 
 <Root>
 	<Value name="ODMap" value="true" />
+	<Value name="ODMap_HideMinimap" value="false" />
+	<Value name="ODMap_TweakTimer" value="false" />
 	<Archive name="ODMap_Cfg" />
 </Root>
