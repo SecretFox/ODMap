@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <!--
 	scale multiplies all scale values
-	iimg loads map from inside the .swf, valid values are "src.assets.map.png" and "src.assets.map_org.png"
+	iimg loads map from inside the .swf, valid values are "src.assets.map.png", "src.assets.map_org.png", "src.assets.map_alt.png"
 	eimg loads img from path inside the mod folder e.g ODMap/assets/map_org.png, you can edit these images as you wish
-	minX is the smallest x Coordinate visible on the map, for included map this is 160
-	minX is the farmost x Coordinate visible on the map, for included map this is 348
-	As it happens the map is perfectly centered square, so these double as minY and maxY values (rectangular/uncentered maps are not supported)
+	minX is the smallest x Coordinate visible on the map, for all included maps this is 160
+	minX is the farmost x Coordinate visible on the map, for all included maps this is 348
+		These double as minY and maxY values (rectangular/uncentered maps are not supported)
 -->
 <root scale="1.20" iimg="src.assets.map_alt.png" minX="160" maxX="348">
 	<!-- 
