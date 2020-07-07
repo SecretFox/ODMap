@@ -12,9 +12,7 @@ Can be moved and resized while GUI is unlocked.
 `/option ODMap_TweakTimer  true/false`[default:false] will control whether timer background should be hidden or not  
 
 You can change between 3 different map styles by editing config.xml  
-[![map1](map1.png "example")](https://raw.githubusercontent.com/SecretFox/ODMap/master/map1.png)  
-[![map2](map2.png "example")](https://raw.githubusercontent.com/SecretFox/ODMap/master/map2.png)  
-[![map3](map3.png "example")](https://raw.githubusercontent.com/SecretFox/ODMap/master/map3.png)  
+[![map1](map1.png "map")](https://raw.githubusercontent.com/SecretFox/ODMap/master/map1.png)[![map2](map2.png "map_org")](https://raw.githubusercontent.com/SecretFox/ODMap/master/map2.png)[![map3](map3.png "map_alt")](https://raw.githubusercontent.com/SecretFox/ODMap/master/map3.png)  
   
 You can edit config.xml which is included in the download to configure how mobs/map get displayed.  
 By default:  
