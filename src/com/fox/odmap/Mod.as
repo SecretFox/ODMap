@@ -1,3 +1,4 @@
+import com.GameInterface.AccountManagement;
 import com.GameInterface.Chat;
 import com.GameInterface.DistributedValue;
 import com.GameInterface.DistributedValueBase;
@@ -19,14 +20,14 @@ import mx.utils.Delegate;
 class com.fox.odmap.Mod
 {
 	static var config:Archive;
+	static var DvalReloadConfig:DistributedValue;
+	static var nametagsEnabled:DistributedValue;
+	static var loaded:Boolean;
+	static var inStoneHenge:Boolean;
 	private var m_swfRoot:MovieClip;
 	private var Container:MovieClip;
 	private var m_Map:Map;
 	private var m_Tracker:Tracker;
-	private var DvalReloadConfig:DistributedValue;
-	private var nametagsEnabled:DistributedValue;
-	private var loaded:Boolean;
-	static var inStoneHenge:Boolean;
 
 	public function Mod(root)
 	{
@@ -145,7 +146,7 @@ class com.fox.odmap.Mod
 		{
 			if (DistributedValueBase.GetDValue("ODMap_HideMinimap"))
 			{
-				DistributedValueBase.SetDValue("hud_map_window", false);
+				HideMiniMap();
 			}
 			SaveNametagPreferences();
 			if (!Container) AttachMap();
@@ -166,6 +167,18 @@ class com.fox.odmap.Mod
 				removeMap();
 				ClearAllCachedLegends();
 			}
+		}
+	}
+	
+	static function HideMiniMap()
+	{
+		if (!AccountManagement.GetInstance().GetLoginState() == _global.Enums.LoginState.e_LoginStateInPlay)
+		{
+			setTimeout(HideMiniMap, 1000);
+		}
+		else
+		{
+			DistributedValueBase.SetDValue("hud_map_window", false);
 		}
 	}
 

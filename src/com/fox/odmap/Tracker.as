@@ -8,6 +8,7 @@ import com.GameInterface.Nametags;
 import com.Utils.Colors;
 import com.Utils.ID32;
 import com.Utils.Signal;
+import com.Utils.SignalGroup;
 import com.fox.odmap.Legend;
 import com.fox.odmap.MarkerConfig;
 import com.fox.odmap.MarkerConfigLegend;
@@ -298,6 +299,7 @@ class com.fox.odmap.Tracker
 		if (char.IsClientChar()) marker.client = true;
 		marker.char = char;
 		marker.config = config;
+		marker.m_Signals = new SignalGroup();
 		marker.containerClip = config.targetClip.createEmptyMovieClip(char.GetID().toString(), config.targetClip.getNextHighestDepth());
 		markerArray.push(marker);
 		// external image

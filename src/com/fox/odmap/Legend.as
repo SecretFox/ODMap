@@ -76,11 +76,10 @@ class com.fox.odmap.Legend
 	{
 		for (var i in Entries)
 		{
-			var Entry:LegendEntry = Entries[i];
-			if (Entry.ID.Equal(id))
+			if (Entries[i].ID.Equal(id))
 			{
-				Entry.Config = config;
-				Entry.Time = Time;
+				LegendEntry(Entries[i]).Config.force = config.force;
+				LegendEntry(Entries[i]).Time = Time;
 				return;
 			}
 		}
@@ -88,7 +87,13 @@ class com.fox.odmap.Legend
 		var Entry:LegendEntry = new LegendEntry();
 		Entry.ID = id;
 		Entry.Time = Time;
-		Entry.Config = config;
+		Entry.Config = new MarkerConfigLegend();
+		Entry.Config.checkFunction = config.checkFunction;
+		Entry.Config.direction = config.direction;
+		Entry.Config.duration = config.duration;
+		Entry.Config.force = config.force;
+		Entry.Config.id = config.id;
+		Entry.Config.type = config.type;
 
 		Entry.TextRoot = LegendContent.createEmptyMovieClip(id.toString(), LegendContent.getNextHighestDepth());
 		Entry.TextRoot._x = 5;
@@ -200,7 +205,7 @@ class com.fox.odmap.Legend
 		UpdateWidth();
 	}
 
-	public function RemoveEntry(id:ID32, force:Boolean,keepLegend:Boolean)
+	public function RemoveEntry(id:ID32, force:Boolean, keepLegend:Boolean)
 	{
 		var found;
 		for (var i in Entries)
