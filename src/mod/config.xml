@@ -78,7 +78,7 @@
 		enabled = Whether to mark the mob spawn locations or not
 		blacklist = List of the (partial) mobs names to ignore
 		minDistance = Mobs has to be at least this far from the hagstone for it count as spawn
-		snapToPortals = Attempt to place the spawn marker at closest portal location
+		snapToPortals = Attempt to place the spawn marker at closest know portal location
 		duration = how long the spawn marker lasts
 	-->
 	<spawns iimg="src.assets.spawn.png" enabled="true" blacklist="M27,E11,G56,C12,G55,X44,H49,S89" minDistance="35" snapToPortals="true" duration="13" depth="10" opacity="100" scale="0.2"/>
