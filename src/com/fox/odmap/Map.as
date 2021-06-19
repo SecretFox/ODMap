@@ -16,6 +16,7 @@ class com.fox.odmap.Map
 	public var pos:Point;
 	public var size:Number;
 	public var loadListener:Object;
+	static var opacity;
 
 	public function Map(_target:MovieClip, _pos:Point, _size:Number, _cb:Function)
 	{
@@ -33,10 +34,12 @@ class com.fox.odmap.Map
 	{
 		if (success){
 			var rootXML:XMLNode = XMLFile.firstChild;
-			var mapLocation = rootXML.attributes.iimg;
+			var mapXML:XMLNode = rootXML.firstChild;
+			var mapLocation = mapXML.attributes.iimg;
+			var opacity = Number(mapXML.attributes.opacity) || 100;
 			if (mapLocation)
 			{
-				Image = target.attachMovie(mapLocation, "Image", target.getNextHighestDepth());
+				Image = target.attachMovie(mapLocation, "Image", 0);
 				if (!Image){
 					ImageFailed();
 					return;
@@ -47,6 +50,7 @@ class com.fox.odmap.Map
 				var pos2 = Common.getOnScreen(Image);
 				Image._x = pos2.x;
 				Image._y = pos2.y;
+				Image._alpha = opacity;
 				cb();
 			}
 			else{
@@ -54,7 +58,7 @@ class com.fox.odmap.Map
 				if (mapLocation)
 				{
 					loadListener = new Object();
-					loadListener.onLoadComplete = Delegate.create(this,ImageLoaded);
+					loadListener.onLoadComplete = Delegate.create(this, ImageLoaded);
 					loadListener.onLoadError = Delegate.create(this, ImageFailed);
 					Image = target.createEmptyMovieClip("Image", target.getNextHighestDepth());
 					var imgLoader:MovieClipLoader = new MovieClipLoader();
@@ -82,6 +86,7 @@ class com.fox.odmap.Map
 		var pos2 = Common.getOnScreen(Image);
 		Image._x = pos2.x;
 		Image._y = pos2.y;
+		Image._alpha = opacity;
 		cb();
 	}
 	

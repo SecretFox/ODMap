@@ -55,6 +55,8 @@
     <asset path="src\assets\player5.png" bitmap="False" />
     <asset path="src\assets\map_org.png" bitmap="False" />
     <asset path="src\assets\map_alt.png" bitmap="False" />
+    <asset path="src\assets\spawn.png" bitmap="False" update="hqAsset\spawn.png" />
+    <asset path="src\assets\spawn.png" bitmap="False" />
   </library>
   <!-- Paths to exclude from the Project Explorer tree -->
   <hiddenPaths>

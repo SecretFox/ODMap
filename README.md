@@ -1,3 +1,4 @@
+[![Downloads](https://img.shields.io/github/downloads/SecretFox/ODMap/total)](https://github.com/SecretFox/ODMap/releases)  
 # ODMap  
 Overlay map for Stonehenge Occult Defence.    
 [![example](example.png "example")](https://raw.githubusercontent.com/SecretFox/ODMap/master/example.png)  

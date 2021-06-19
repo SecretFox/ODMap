@@ -1,5 +1,6 @@
 import com.GameInterface.Game.Character;
 import com.Utils.SignalGroup;
+import com.Utils.Slot;
 import com.fox.odmap.MarkerConfig;
 /*
 * ...
@@ -14,4 +15,5 @@ class com.fox.odmap.MarkerObject
 	public var currentCast:String;
 	public var config:MarkerConfig;
 	public var char:Character;
+	public var colorFunc:Slot;
 }
