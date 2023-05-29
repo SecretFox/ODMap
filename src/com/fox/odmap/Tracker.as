@@ -53,7 +53,6 @@ class com.fox.odmap.Tracker
 	static var LocToPix:Number;
 	static var posToDist2:Number;
 	static var mapScale:Number;
-	static var portalLocations = [[235, 304], [214, 284], [205, 264], [212, 234], [231, 212], [264, 205], [282, 216], [298, 232], [307, 253], [303, 274], [286, 291], [264, 302]];
 
 	// Stonehenge is perfectly centered circle,no need for Y
 	//private var minY = 160;
@@ -81,7 +80,7 @@ class com.fox.odmap.Tracker
 	{
 		m_swfRoot.onEnterFrame = undefined;
 		MovingMap = true;
-		for (var i in markerArray)MarkerObject(markerArray[i]).imgClip._visible = false;
+		for (var i in markerArray) MarkerObject(markerArray[i]).imgClip._visible = false;
 		for (var i in SpawnArray) SpawnMarker(SpawnArray[i]).imgClip._visible = false;
 		m_Legend.Hide();
 	}
@@ -135,14 +134,15 @@ class com.fox.odmap.Tracker
 		if (waypoint.m_WaypointType == _global.Enums.WaypointType.e_RMWPScenario_NPCHelp) AddDamage(waypoint, waypoint["m_WorldPosition"]);
 	}
 	
-	private function SlotWaypointRemoved(id:ID32) 
+	private function SlotWaypointRemoved(id:ID32)
 	{
 		for (var i in SpawnArray)
 		{
-			if ( SpawnMarker(SpawnArray[i]).m_Id == id)
+			var marker:SpawnMarker = SpawnArray[i]; 
+			if ( marker.m_Id.Equal(id))
 			{
-				SpawnMarker(SpawnArray[i]).containerClip.removeMovieClip();
-				markerArray.splice(Number(i), 1);
+				marker.containerClip.removeMovieClip();
+				SpawnArray.splice(Number(i), 1);
 			}
 		}
 	}
@@ -354,7 +354,6 @@ class com.fox.odmap.Tracker
 	
 	private function AddPortal(wp:Waypoint, location:Vector3 )
 	{
-		
 		var imgLoader:MovieClipLoader;
 		var spawnMarker:SpawnMarker = new SpawnMarker();
 		spawnMarker.containerClip = spawnConfig.targetClip.createEmptyMovieClip(wp.m_Id.toString(), spawnConfig.targetClip.getNextHighestDepth());
