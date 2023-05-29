@@ -2,13 +2,9 @@
 * ...
 * @author fox
 */
-class com.fox.odmap.SpawnConfig
+class com.fox.odmap.GenericConfig
 {
 	public var enabled:Boolean;
-	public var blacklist:Array;
-	public var minDistance:Number;
-	public var snapToPortals:Boolean;
-	public var duration:Number;
 	public var depth:Number;
 	public var scale:Number;
 	public var opacity:Number;

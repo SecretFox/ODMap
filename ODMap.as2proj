@@ -57,6 +57,7 @@
     <asset path="src\assets\map_alt.png" bitmap="False" />
     <asset path="src\assets\spawn.png" bitmap="False" update="hqAsset\spawn.png" />
     <asset path="src\assets\spawn.png" bitmap="False" />
+    <asset path="src\assets\damage.png" bitmap="False" />
   </library>
   <!-- Paths to exclude from the Project Explorer tree -->
   <hiddenPaths>
@@ -65,8 +66,8 @@
   <!-- Executed before build -->
   <preBuildCommand />
   <!-- Executed after build -->
-  <postBuildCommand alwaysRun="False">xcopy "$(ProjectDir)\bin\*.*" "H:\Secret World Legends\Data\Gui\Custom\Flash\ODMap\*.*" /e /y
-xcopy "$(ProjectDir)\src\mod\*.*" "H:\Secret World Legends\Data\Gui\Custom\Flash\ODMap\*.*" /e /y
+  <postBuildCommand alwaysRun="False">xcopy "$(ProjectDir)\bin\*.*" "J:\Secret World Legends\Data\Gui\Custom\Flash\ODMap\*.*" /e /y
+xcopy "$(ProjectDir)\src\mod\*.*" "J:\Secret World Legends\Data\Gui\Custom\Flash\ODMap\*.*" /e /y
 
 xcopy "$(ProjectDir)\bin\*.*" "./deployment/ODMap/*.*" /e /y
 xcopy "$(ProjectDir)\src\mod\*.*" "./deployment/ODMap/*.*" /e /y
