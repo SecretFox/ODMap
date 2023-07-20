@@ -4,6 +4,7 @@ import com.GameInterface.DistributedValue;
 import com.GameInterface.DistributedValueBase;
 import com.GameInterface.GUIModuleIF;
 import com.GameInterface.Game.Character;
+import com.GameInterface.ScryWidgets;
 import com.GameInterface.WaypointInterface;
 import com.Utils.Archive;
 import com.Utils.GlobalSignal;
@@ -185,6 +186,7 @@ class com.fox.odmap.Mod
 	public function removeMap(keepLegend)
 	{
 		GlobalSignal.SignalScryTimerLoaded.Disconnect(TweakTimer, this);
+		ScryWidgets.SignalScryMessage.Disconnect(TweakTimer, this);
 		m_Tracker.Disconnect(keepLegend);
 		m_Tracker = undefined;
 		Container.removeMovieClip();
@@ -280,13 +282,13 @@ class com.fox.odmap.Mod
 		if (DistributedValueBase.GetDValue("ODMap_TweakTimer"))
 		{
 			GlobalSignal.SignalScryTimerLoaded.Connect(TweakTimer, this);
+			ScryWidgets.SignalScryMessage.Connect(TweakTimer, this);
 		}
 	}
 	
 	private function TweakTimer()
 	{
 		_root.scrytimer.m_PanelBackground._alpha = 0;
-		GlobalSignal.SignalScryTimerLoaded.Disconnect(TweakTimer, this);
 	}
 
 	private function StartDrag()
