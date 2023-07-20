@@ -522,17 +522,19 @@ class com.fox.odmap.Tracker
 		}
 		else
 		{
-			if (marker.char.GetOffensiveTarget().IsPlayer())
-			{
-				Colors.ApplyColor(marker.imgClip, config.color2);
-			}
-			else
+			var char:Character = Character.GetCharacter(marker.char.GetOffensiveTarget());
+			if (!char.GetID().IsPlayer() && !char.IsPet())
 			{
 				Colors.ApplyColor(marker.imgClip,  config.color1);
 			}
+			else
+			{
+				Colors.ApplyColor(marker.imgClip, config.color2);
+			}
 			var f:Function = function()
 			{
-				if (!marker.char.GetOffensiveTarget().IsPlayer())
+				char = Character.GetCharacter(marker.char.GetOffensiveTarget());
+				if (!char.GetID().IsPlayer() && !char.IsPet())
 				{
 					Colors.ApplyColor(marker.imgClip,  config.color1);
 				}

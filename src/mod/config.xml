@@ -31,7 +31,7 @@
 				direction, dount "down" or "up"
 				force, whether the legend should be kept even if the target nametag disappears(target can still be alive)
 				function, function that checks if marker should be deleted (can be left empty), if duration is unspecified this takes care of removing the legend
-			keep determines if the image should be removed when the mob dies
+			keep determines if the marker should be removed when the mob dies
 			namefilter is comma separated list of (partial) strings that get checked against mob name
 			bufffilter is comma separated list of buffID's that get checked against targets buffs
 			

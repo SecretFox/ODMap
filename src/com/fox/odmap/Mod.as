@@ -232,7 +232,7 @@ class com.fox.odmap.Mod
 		if (delta > 0)
 		{
 			var newSize = oldSize + 5;
-			if (newSize > 400) newSize = 400;
+			if (newSize > 500) newSize = 500;
 			if (newSize != oldSize) ChangeSize(newSize);
 		}
 		else
@@ -254,6 +254,11 @@ class com.fox.odmap.Mod
 	private function ChangePos()
 	{
 		var pos:Point = Common.getOnScreen(m_Map.Image);
+		if ( DistributedValueBase.GetDValue("TopMenuAlignment") == 0)
+		{
+			var minY = _root.mainmenuwindow.m_BackgroundBar.getBounds().yMax * _root.mainmenuwindow.m_BackgroundBar._yscale / 100 || 20;
+			pos.y = Math.max(minY, pos.y);
+		}
 		config.ReplaceEntry("Pos", pos);
 		m_Map.setPos(pos);
 		m_Tracker.CalculateLocToPixel();
@@ -261,27 +266,21 @@ class com.fox.odmap.Mod
 		m_Tracker.m_Legend.UpdatePosSize();
 	}
 
-	private function AttachMap(temp)
+	private function AttachMap()
 	{
 		Container = m_swfRoot.createEmptyMovieClip("MapContainer", m_swfRoot.getNextHighestDepth());
-		var callback
-		if (!temp) callback =  Delegate.create(this, MapLoaded);
-		else callback =  Delegate.create(this, TempMapLoaded);
+		var callback:Function = Delegate.create(this, MapLoaded);
 		m_Map = new Map(Container, getMapPos(), getMapSize(), callback);
 	}
 
 	private function MapLoaded()
 	{
 		AttachTracker();
-		SetMapAction(false);
-		if (DistributedValueBase.GetDValue("ODMap_TweakTimer")){
+		GuiEdit(false);
+		if (DistributedValueBase.GetDValue("ODMap_TweakTimer"))
+		{
 			GlobalSignal.SignalScryTimerLoaded.Connect(TweakTimer, this);
 		}
-	}
-	
-	private function TempMapLoaded()
-	{
-		SetMapAction(true);
 	}
 	
 	private function TweakTimer()
@@ -303,8 +302,10 @@ class com.fox.odmap.Mod
 		ChangePos();
 	}
 	
-	private function SetMapAction(state)
+	private function GuiEdit(state)
 	{
+		if ( !inStoneHenge ) return
+		TweakTimer();
 		if (state)
 		{
 			Container.Image.onPress = Delegate.create(this, StartDrag);
@@ -313,26 +314,11 @@ class com.fox.odmap.Mod
 		}
 		else
 		{
-			Container.Image.onPress = Container.Image.onRelease = Container.Image.onReleaseOutside = Container.Image.onMouseWheel = undefined;
-		}
-	}
-
-	private function GuiEdit(state)
-	{
-		SetMapAction(state);
-		if (state)
-		{
-			if (!inStoneHenge)
-			{
-				if (!Container) AttachMap(true);
-			}
-		}
-		else
-		{
-			if (!inStoneHenge)
-			{
-				removeMap();
-			}
+			StopDrag();
+			delete Container.Image.onPress;
+			delete Container.Image.onRelease;
+			delete Container.Image.onReleaseOutside;
+			delete Container.Image.onMouseWheel;
 		}
 	}
 
